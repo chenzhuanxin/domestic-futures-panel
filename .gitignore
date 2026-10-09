@@ -1,0 +1,17 @@
+# ---- 运行时/打包产物 ----
+__pycache__/
+*.py[cod]
+build/
+dist/
+*.spec.bak
+
+# ---- 本地私有配置（含账号密码，禁止提交）----
+tianqin.json
+tianqin.local.json
+
+# ---- 编辑器/系统 ----
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+*.log
