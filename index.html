@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>国内期货行情面板 · 全品种实时行情 / 加权指数</title>
+<meta name="description" content="单机运行的国内全品种期货行情面板，覆盖 79 个品种，支持分时、1~120分钟K线、日周月年K、六种技术指标，内置持仓量加权指数。零依赖、单文件 EXE。">
+<style>
+:root{
+  --bg:#0d1117; --bg2:#161b22; --bg3:#1c2333; --bd:#30363d;
+  --fg:#e6edf3; --fg2:#8b949e; --fg3:#6e7681;
+  --acc:#f0883e; --acc2:#58a6ff; --red:#f85149; --green:#3fb950;
+  --code-bg:#161b22;
+}
+html[data-theme="light"]{
+  --bg:#ffffff; --bg2:#f6f8fa; --bg3:#eef2f7; --bd:#d0d7de;
+  --fg:#1f2328; --fg2:#59636e; --fg3:#818b98;
+  --acc:#bc4c00; --acc2:#0969da; --red:#cf222e; --green:#1a7f37;
+  --code-bg:#f6f8fa;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--fg); line-height:1.7;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--acc2);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:960px;margin:0 auto;padding:0 22px}
+
+/* 顶栏 */
+header{
+  position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--bd);
+}
+header .wrap{display:flex;align-items:center;gap:16px;height:60px}
+.logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15.5px;white-space:nowrap}
+.logo .dot{width:9px;height:9px;border-radius:50%;background:var(--acc);box-shadow:0 0 9px var(--acc)}
+nav{margin-left:auto;display:flex;gap:20px;align-items:center;font-size:14px}
+nav a{color:var(--fg2)}
+nav a:hover{color:var(--fg);text-decoration:none}
+#themeBtn{
+  background:var(--bg3);border:1px solid var(--bd);color:var(--fg2);
+  border-radius:7px;padding:5px 11px;cursor:pointer;font-size:13px;font-family:inherit;
+}
+#themeBtn:hover{color:var(--fg);border-color:var(--fg3)}
+
+/* Hero */
+.hero{padding:64px 0 46px;border-bottom:1px solid var(--bd)}
+.hero h1{font-size:clamp(27px,4.6vw,42px);line-height:1.24;font-weight:800;letter-spacing:-.02em}
+.hero h1 .hl{color:var(--acc)}
+.hero p.lead{margin-top:18px;font-size:16.5px;color:var(--fg2);max-width:700px}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.badge{
+  font-size:12.5px;padding:4px 11px;border-radius:999px;
+  background:var(--bg3);border:1px solid var(--bd);color:var(--fg2);
+}
+.badge b{color:var(--fg)}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:9px;
+  font-size:14.5px;font-weight:600;border:1px solid transparent;transition:.16s;
+}
+.btn:hover{text-decoration:none;transform:translateY(-1px)}
+.btn-p{background:var(--acc);color:#0d1117}
+.btn-p:hover{filter:brightness(1.1)}
+.btn-s{background:var(--bg3);color:var(--fg);border-color:var(--bd)}
+.btn-s:hover{border-color:var(--fg3)}
+
+/* 区块 */
+section{padding:52px 0;border-bottom:1px solid var(--bd)}
+h2{font-size:23px;font-weight:700;margin-bottom:8px;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+h2 .n{
+  font-size:12px;font-weight:700;color:var(--acc);background:color-mix(in srgb,var(--acc) 15%,transparent);
+  border:1px solid color-mix(in srgb,var(--acc) 35%,transparent);
+  width:26px;height:26px;border-radius:7px;display:grid;place-items:center;flex:none;
+}
+.sub{color:var(--fg2);font-size:14.5px;margin-bottom:26px}
+
+/* 卡片网格 */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));gap:14px}
+.card{
+  background:var(--bg2);border:1px solid var(--bd);border-radius:11px;padding:18px 19px;
+  transition:.16s;
+}
+.card:hover{border-color:var(--fg3)}
+.card .ico{font-size:20px;margin-bottom:9px;display:block}
+.card h3{font-size:15px;font-weight:650;margin-bottom:6px}
+.card p{font-size:13.5px;color:var(--fg2);line-height:1.62}
+
+/* 步骤 */
+.steps{counter-reset:s;display:flex;flex-direction:column;gap:15px}
+.step{display:flex;gap:15px;align-items:flex-start}
+.step .num{
+  flex:none;width:30px;height:30px;border-radius:9px;background:var(--acc);color:#0d1117;
+  display:grid;place-items:center;font-weight:700;font-size:14px;
+}
+.step .body{flex:1;min-width:0}
+.step .body b{display:block;font-size:15px;margin-bottom:3px}
+.step .body span{font-size:13.5px;color:var(--fg2)}
+
+/* 代码块 */
+pre{
+  background:var(--code-bg);border:1px solid var(--bd);border-radius:9px;
+  padding:14px 16px;overflow-x:auto;font-size:13px;line-height:1.65;margin-top:11px;
+  font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;
+}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;font-size:.92em}
+p code,li code,td code{
+  background:var(--bg3);border:1px solid var(--bd);border-radius:4px;
+  padding:1.5px 5.5px;font-size:12.5px;color:var(--acc);
+}
+
+/* 表格 */
+.tw{overflow-x:auto;margin-top:14px}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:430px}
+th,td{padding:9px 13px;text-align:left;border-bottom:1px solid var(--bd)}
+th{color:var(--fg2);font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;
+   background:var(--bg2);white-space:nowrap}
+tbody tr:hover{background:var(--bg2)}
+td{color:var(--fg2)}
+td b,td strong{color:var(--fg)}
+.up{color:var(--red)}     /* 涨=红（中国市场惯例） */
+.down{color:var(--green) }
+
+/* 文档入口 */
+.docs{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px}
+.doc{
+  display:block;background:var(--bg2);border:1px solid var(--bd);border-radius:11px;
+  padding:20px;transition:.16s;
+}
+.doc:hover{border-color:var(--acc);text-decoration:none;transform:translateY(-2px)}
+.doc h3{font-size:16px;font-weight:650;color:var(--fg);margin-bottom:7px;display:flex;align-items:center;gap:8px}
+.doc p{font-size:13.5px;color:var(--fg2)}
+.doc .go{margin-top:13px;font-size:13px;color:var(--acc2);font-weight:600}
+
+/* 提示块 */
+.note{
+  background:var(--bg2);border-left:3px solid var(--acc2);border-radius:0 8px 8px 0;
+  padding:13px 17px;margin-top:16px;font-size:13.8px;color:var(--fg2);
+}
+.note b{color:var(--fg)}
+.warn{border-left-color:var(--acc)}
+
+/* 页脚 */
+footer{padding:34px 0;font-size:13.5px;color:var(--fg3)}
+footer .row{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center}
+footer .sign{margin-top:12px;color:var(--fg2)}
+footer .sign b{color:var(--acc)}
+#wx{cursor:pointer;border-bottom:1px dashed var(--fg3)}
+#wx:hover{color:var(--acc)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="logo"><span class="dot"></span>国内期货行情面板</div>
+    <nav>
+      <a href="#features">功能</a>
+      <a href="#start">快速开始</a>
+      <a href="#index">加权指数</a>
+      <a href="#docs">文档</a>
+      <a href="https://github.com/chenzhuanxin/domestic-futures-panel" target="_blank" rel="noopener">GitHub</a>
+      <button id="themeBtn" type="button">切换主题</button>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <h1>国内全品种期货行情面板<br><span class="hl">零依赖 · 单文件 EXE · 自研加权指数</span></h1>
+    <p class="lead">
+      一个跑在你自己电脑上的期货看盘工具。覆盖中金所 / 上期所 / 大商所 / 郑商所 / 广期所
+      共 <b>79 个品种</b>，支持实时行情、分时、1~120 分钟 K 线、日 / 周 / 月 / 年 K、
+      成交量持仓量副图与六种技术指标，并内置<b>持仓量加权指数</b>（与天勤官方指数偏差 &lt; 0.05%）。
+    </p>
+    <div class="badges">
+      <span class="badge"><b>79</b> 个品种</span>
+      <span class="badge"><b>5</b> 家交易所</span>
+      <span class="badge"><b>11</b> 个周期</span>
+      <span class="badge"><b>6</b> 种副图指标</span>
+      <span class="badge"><b>5</b> 种主图指标</span>
+      <span class="badge">零第三方依赖</span>
+      <span class="badge">数据源：新浪财经</span>
+    </div>
+    <div class="cta">
+      <a class="btn btn-p" href="https://github.com/chenzhuanxin/domestic-futures-panel/releases/latest" target="_blank" rel="noopener">⬇ 下载 EXE（74 MB）</a>
+      <a class="btn btn-s" href="https://github.com/chenzhuanxin/domestic-futures-panel" target="_blank" rel="noopener">查看源码</a>
+    </div>
+    <div class="note warn" style="margin-top:26px">
+      <b>免责声明：</b>本项目仅用于技术学习与行情查看，数据来自第三方公开接口，
+      可能存在延迟或错误，<b>不构成任何投资建议</b>。
+    </div>
+  </div>
+</div>
+
+<section id="features">
+  <div class="wrap">
+    <h2><span class="n">1</span>核心功能</h2>
+    <p class="sub">参照新浪财经期货行情页的版面设计，左边品种导航、右上合约列表、中间主图 + 双副图。</p>
+    <div class="grid">
+      <div class="card">
+        <span class="ico">📈</span>
+        <h3>全周期行情</h3>
+        <p>分时、1 / 5 / 15 / 30 / 60 / 120 分钟、日、周、月、年 K。周月年 K 由日 K 合成，成交量求和、持仓量取期末值。</p>
+      </div>
+      <div class="card">
+        <span class="ico">⚖️</span>
+        <h3>自研加权指数</h3>
+        <p>新浪没有加权指数，本项目用全部在交易合约按持仓量加权合成。支持仓权 / 量权 / 天勤三档口径切换。</p>
+      </div>
+      <div class="card">
+        <span class="ico">📊</span>
+        <h3>主图 5 种指标</h3>
+        <p>MA、SAR（红绿双色点）、BOLL、EXPMA、BBIBOLL 一键切换，SAR 多空点按位置分离，色盲友好。</p>
+      </div>
+      <div class="card">
+        <span class="ico">🧮</span>
+        <h3>副图 6 种指标</h3>
+        <p>MACD、KDJ、RSI、BOLL、WR、DMI。选择器位于副图二自身位置；BOLL 会同步叠加到主图。</p>
+      </div>
+      <div class="card">
+        <span class="ico">🌏</span>
+        <h3>全品种覆盖</h3>
+        <p>79 个品种按交易所分组，支持中文名 / 代码搜索。停牌品种自动识别置灰，中文名自动跟随上游更新。</p>
+      </div>
+      <div class="card">
+        <span class="ico">👆</span>
+        <h3>触屏可用</h3>
+        <p>滚轮缩放、拖动平移、单指滑动、双指捏合，方向键与快捷键俱全，手机平板也能用。</p>
+      </div>
+      <div class="card">
+        <span class="ico">📐</span>
+        <h3>分时轴自适应</h3>
+        <p>横轴按整段交易时段铺满（刚开盘不会被拉伸），纵轴以昨结算为中心对称取整档百分比。</p>
+      </div>
+      <div class="card">
+        <span class="ico">💾</span>
+        <h3>配置记忆</h3>
+        <p>深色 / 浅色主题、合约、周期、指标、指数口径全部写入本地，刷新后保持。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="start">
+  <div class="wrap">
+    <h2><span class="n">2</span>快速开始</h2>
+    <p class="sub">两种方式任选，EXE 连 Python 都不用装。</p>
+    <div class="steps">
+      <div class="step">
+        <div class="num">1</div>
+        <div class="body">
+          <b>下载 EXE</b>
+          <span>从 <a href="https://github.com/chenzhuanxin/domestic-futures-panel/releases/latest" target="_blank" rel="noopener">Releases</a> 下载 <code>futures-panel-v1.0.0.exe</code>，放到任意文件夹。</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <div class="body">
+          <b>双击运行</b>
+          <span>会弹出控制台显示面板地址与行情连通状态，稍等几秒浏览器自动打开 <code>http://127.0.0.1:8686/</code>。</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <div class="body">
+          <b>开始看盘</b>
+          <span>左侧选品种，右侧选合约，顶部切周期与指标。滚轮缩放、拖动平移、鼠标移入看十字光标详情。</span>
+        </div>
+      </div>
+    </div>
+
+    <h2 style="margin-top:44px;font-size:19px">源码运行（需 Python 3.8+）</h2>
+    <p class="sub">后端是纯标准库实现，<b>不需要 pip install 任何东西</b>。</p>
+<pre><code>git clone https://github.com/chenzhuanxin/domestic-futures-panel.git
+cd domestic-futures-panel
+python server.py</code></pre>
+
+    <div class="note">
+      <b>首次启动较慢是正常的：</b>单文件 EXE 每次启动都要把约 74 MB 解压到临时目录，需 5~20 秒。
+      关闭时关掉控制台窗口或按 <code>Ctrl+C</code>。
+    </div>
+
+    <h2 style="margin-top:44px;font-size:19px">常用参数</h2>
+    <div class="tw">
+      <table>
+        <thead><tr><th>参数</th><th>说明</th><th>默认</th></tr></thead>
+        <tbody>
+          <tr><td><code>--symbol SA2705</code></td><td>默认合约</td><td><code>SA2701</code></td></tr>
+          <tr><td><code>--port 9000</code></td><td>监听端口（被占用自动顺延）</td><td><code>8686</code></td></tr>
+          <tr><td><code>--host 0.0.0.0</code></td><td>允许局域网访问（手机可看）</td><td><code>127.0.0.1</code></td></tr>
+          <tr><td><code>--no-browser</code></td><td>不自动打开浏览器</td><td>—</td></tr>
+          <tr><td><code>-v</code></td><td>打印访问日志</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="index">
+  <div class="wrap">
+    <h2><span class="n">3</span>加权指数：为什么自己算</h2>
+    <p class="sub">新浪没有真正的加权指数（SA99 / SA888 实测为空），而加权指数比主力连续更能反映整个品种的真实价格水平。</p>
+<pre><code>指数最新价 = Σ(合约最新价 × 合约持仓量) / Σ(持仓量)
+指数昨结   = Σ(合约昨结价 × 合约持仓量) / Σ(持仓量)   → 涨跌口径与单合约一致
+指数开高低 = 各字段同权重加权
+成交量/持仓量 = Σ(各合约)</code></pre>
+    <div class="tw">
+      <table>
+        <thead><tr><th>口径</th><th>权重</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><b>仓权</b>（默认）</td><td>持仓量</td><td>与官方指数口径最接近，反映资金沉淀</td></tr>
+          <tr><td><b>量权</b></td><td>成交量</td><td>反映交易活跃度分布</td></tr>
+          <tr><td><b>天勤</b></td><td>—</td><td>调用天勤（快期）官方 <code>KQ.i</code> / <code>KQ.m</code>，需配账号</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note">
+      <b>算法可信度：</b>本地持仓量加权指数与天勤官方指数在 5 家交易所 6 个品种上
+      偏差全部 ≤ 0.041%（纯碱 1008.87 vs 1009.0）。
+    </div>
+    <div class="note warn">
+      <b>历史日 K 必须逐根动态加权：</b>主力月份会随时间轮换，若用「今天的合约名单 + 固定权重」
+      去合成历史，会严重漏算——实测 2026-03-16 成交量低估约 <b>200 倍</b>。
+      正确做法是枚举历史上出现过的全部月份合约，按<b>每根 K 线自身的持仓量</b>加权。
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr><th>加权代码</th><th>品种</th><th>日 K 根数</th><th>起始日期</th></tr></thead>
+        <tbody>
+          <tr><td><code>RBW</code></td><td>螺纹钢</td><td>2,014</td><td>2018-06-19</td></tr>
+          <tr><td><code>CUW</code></td><td>铜</td><td>2,014</td><td>2018-06-19</td></tr>
+          <tr><td><code>MW</code></td><td>豆粕</td><td>1,995</td><td>2018-07-16</td></tr>
+          <tr><td><code>AUW</code></td><td>黄金</td><td>1,972</td><td>2018-08-16</td></tr>
+          <tr><td><code>IFW</code></td><td>沪深300</td><td>1,869</td><td>2019-01-21</td></tr>
+          <tr><td><code>SAW</code></td><td>纯碱</td><td>1,656</td><td>2019-12-06</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="docs">
+  <div class="wrap">
+    <h2><span class="n">4</span>详细文档</h2>
+    <p class="sub">两份完整的中文文档，涵盖全部操作与全部数据接口细节。</p>
+    <div class="docs">
+      <a class="doc" href="usage.html">
+        <h3>📘 使用说明</h3>
+        <p>两种运行方式、界面导览、行情字段释义、11 个周期、主图副图指标、指数口径、图表操作全表、天勤账号配置、常见问题。</p>
+        <div class="go">阅读文档 →</div>
+      </a>
+      <a class="doc" href="datasource.html">
+        <h3>🔌 数据源说明</h3>
+        <p>新浪财经四个接口的 URL / 参数 / 字段下标 / 口径，天勤 KQ.i 与 KQ.m 对接细节，加权算法推导，缓存与反爬处理。</p>
+        <div class="go">阅读文档 →</div>
+      </a>
+      <a class="doc" href="https://github.com/chenzhuanxin/domestic-futures-panel" target="_blank" rel="noopener">
+        <h3>💻 源码仓库</h3>
+        <p>Python 后端 + 单文件 HTML 前端，含 3 套回归测试共 179 项断言。欢迎 star 与 issue。</p>
+        <div class="go">前往 GitHub →</div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="n">5</span>技术栈与验证</h2>
+    <div class="tw">
+      <table>
+        <thead><tr><th>项目</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>后端</td><td>Python 标准库（<code>http.server</code>），零第三方依赖</td></tr>
+          <tr><td>前端</td><td>单文件 <code>index.html</code>，内联 CSS/JS，Canvas 绘图，可离线</td></tr>
+          <tr><td>数据源</td><td>新浪财经期货公开接口 + 天勤（快期）<code>tqsdk</code>（可选）</td></tr>
+          <tr><td>打包</td><td>PyInstaller 单文件，74 MB，保留控制台便于排错</td></tr>
+          <tr><td>回归测试</td><td><code>test_front.js</code> 148 项 + <code>verify_idxseg.js</code> 16 项 + <code>verify_weighted.py</code> 15 项 = <b>179 项</b>，全部通过</td></tr>
+          <tr><td>EXE 验证</td><td>三套测试以 EXE 实例为靶心运行，证明打包产物与源码功能等价</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="row">
+      <a href="https://github.com/chenzhuanxin/domestic-futures-panel" target="_blank" rel="noopener">源码仓库</a>
+      <a href="https://github.com/chenzhuanxin/domestic-futures-panel/releases/latest" target="_blank" rel="noopener">下载 EXE</a>
+      <a href="usage.html">使用说明</a>
+      <a href="datasource.html">数据源说明</a>
+      <a href="https://github.com/chenzhuanxin/domestic-futures-panel/issues" target="_blank" rel="noopener">问题反馈</a>
+    </div>
+    <div class="sign">
+      设计：<b>公歧子</b>　微信：<span id="wx" title="点击复制微信号">gongqizi0</span>
+      <div style="margin-top:8px">数据来自第三方公开接口，可能存在延迟或错误，不构成任何投资建议。</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var root = document.documentElement, btn = document.getElementById('themeBtn');
+  var saved = null;
+  try { saved = localStorage.getItem('site.theme'); } catch(e){}
+  if (saved) root.dataset.theme = saved;
+
+  function sync(){
+    btn.textContent = root.dataset.theme === 'dark' ? '浅色模式' : '深色模式';
+  }
+  sync();
+  btn.addEventListener('click', function(){
+    root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    try { localStorage.setItem('site.theme', root.dataset.theme); } catch(e){}
+    sync();
+  });
+
+  var wx = document.getElementById('wx');
+  if (wx) wx.addEventListener('click', function(){
+    var t = 'gongqizi0', old = wx.textContent;
+    var done = function(){ wx.textContent = '已复制 ' + t;
+      setTimeout(function(){ wx.textContent = old; }, 1400); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(done, done);
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); } catch(e){}
+      document.body.removeChild(ta); done();
+    }
+  });
+})();
+</script>
+</body>
+</html>
