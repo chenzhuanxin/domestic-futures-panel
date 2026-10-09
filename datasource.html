@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数据源说明 · 国内期货行情面板</title>
+<meta name="description" content="国内期货行情面板数据源说明：新浪财经各接口的URL/参数/字段/口径，天勤KQ.i/KQ.m对接，加权指数算法与缓存策略。">
+<style>
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#1c2333;--bd:#30363d;
+  --fg:#e6edf3;--fg2:#8b949e;--fg3:#6e7681;
+  --acc:#f0883e;--acc2:#58a6ff;--code-bg:#161b22;
+}
+html[data-theme="light"]{
+  --bg:#fff;--bg2:#f6f8fa;--bg3:#eef2f7;--bd:#d0d7de;
+  --fg:#1f2328;--fg2:#59636e;--fg3:#818b98;
+  --acc:#bc4c00;--acc2:#0969da;--code-bg:#f6f8fa;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);line-height:1.78;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased}
+a{color:var(--acc2);text-decoration:none}
+a:hover{text-decoration:underline}
+header{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--bd)}
+header .bar{max-width:900px;margin:0 auto;padding:0 22px;display:flex;align-items:center;
+  gap:16px;height:58px;font-size:14px}
+header .logo{font-weight:700;font-size:15px;white-space:nowrap;display:flex;align-items:center;gap:8px}
+header .logo i{width:8px;height:8px;border-radius:50%;background:var(--acc);
+  box-shadow:0 0 9px var(--acc);display:block}
+header nav{margin-left:auto;display:flex;gap:18px;align-items:center}
+header nav a{color:var(--fg2)}
+header nav a:hover{color:var(--fg);text-decoration:none}
+#themeBtn{background:var(--bg3);border:1px solid var(--bd);color:var(--fg2);
+  border-radius:7px;padding:5px 11px;cursor:pointer;font-size:12.5px;font-family:inherit}
+#themeBtn:hover{color:var(--fg);border-color:var(--fg3)}
+main{max-width:900px;margin:0 auto;padding:38px 22px 70px}
+h1{font-size:clamp(25px,4vw,34px);font-weight:800;letter-spacing:-.02em;
+  line-height:1.28;margin:8px 0 10px;padding-bottom:20px;border-bottom:1px solid var(--bd)}
+h2{font-size:21px;font-weight:700;margin:44px 0 12px;letter-spacing:-.01em;
+  padding-top:6px;scroll-margin-top:74px}
+h3{font-size:17px;font-weight:650;margin:30px 0 10px;scroll-margin-top:74px}
+h4{font-size:15px;font-weight:650;margin:22px 0 8px}
+p{margin:12px 0;color:var(--fg)}
+strong{font-weight:650;color:var(--fg)}
+ul,ol{margin:12px 0 12px 24px}
+li{margin:6px 0;color:var(--fg2)}
+li strong,li b{color:var(--fg)}
+hr{border:0;border-top:1px solid var(--bd);margin:38px 0}
+blockquote{border-left:3px solid var(--acc);background:var(--bg2);
+  border-radius:0 8px 8px 0;padding:12px 18px;margin:16px 0;color:var(--fg2)}
+blockquote p{margin:5px 0;color:var(--fg2)}
+pre{background:var(--code-bg);border:1px solid var(--bd);border-radius:9px;
+  padding:15px 17px;overflow-x:auto;font-size:13px;line-height:1.68;margin:15px 0}
+pre code{font-size:13px}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace}
+p code,li code,td code,th code{background:var(--bg3);border:1px solid var(--bd);
+  border-radius:4px;padding:1.5px 5.5px;font-size:12.5px;color:var(--acc)}
+pre code{background:none;border:0;color:var(--fg);padding:0}
+.tw{overflow-x:auto;margin:16px 0}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:420px}
+th,td{padding:9px 13px;text-align:left;border-bottom:1px solid var(--bd)}
+th{color:var(--fg2);font-weight:600;font-size:12.5px;background:var(--bg2);white-space:nowrap}
+tbody tr:hover{background:var(--bg2)}
+td{color:var(--fg2)}
+td b,td strong{color:var(--fg)}
+.toc{background:var(--bg2);border:1px solid var(--bd);border-radius:11px;
+  padding:16px 22px;margin:24px 0}
+.toc-h{font-size:13px;font-weight:700;color:var(--fg2);text-transform:uppercase;
+  letter-spacing:.05em;margin-bottom:9px}
+.toc ol{margin:0 0 0 20px}
+.toc li{margin:4px 0;font-size:14px}
+footer{border-top:1px solid var(--bd);padding:26px 0;max-width:900px;margin:0 auto;
+  padding-left:22px;padding-right:22px;font-size:13.5px;color:var(--fg3)}
+footer .sign b{color:var(--acc)}
+#wx{cursor:pointer;border-bottom:1px dashed var(--fg3)}
+#wx:hover{color:var(--acc)}
+footer .row{display:flex;flex-wrap:wrap;gap:8px 20px;margin-bottom:10px}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="logo"><i></i>国内期货行情面板</div>
+    <nav>
+      <a href="index.html">首页</a>
+      <a href="usage.html">使用说明</a>
+      <a href="datasource.html">数据源说明</a>
+      <a href="https://github.com/chenzhuanxin/domestic-futures-panel" target="_blank" rel="noopener">GitHub</a>
+      <button id="themeBtn" type="button">切换主题</button>
+    </nav>
+  </div>
+</header>
+<main>
+<h1 id="h-国内期货行情面板-数据源说明">国内期货行情面板 · 数据源说明</h1>
+<p>本文档完整说明项目所用的每个数据接口：<strong>URL、请求参数、返回结构、字段下标、口径含义</strong>，</p>
+<p>以及<strong>加权指数的算法细节</strong>与<strong>缓存策略</strong>。</p>
+<blockquote><p>一句话总结：主力数据来自<strong>新浪财经期货公开接口</strong>（免费、无需注册），</p><p>加权指数的官方基准来自<strong>天勤（快期）<code>KQ.i</code> / <code>KQ.m</code></strong>。</p><p>设计：<strong>公歧子</strong>　微信：<strong>gongqizi0</strong></p></blockquote>
+<hr>
+<h2 id="h-目录">目录</h2>
+<ol><li><a href="#一数据源总览">数据源总览</a></li><li><a href="#二新浪财经实时行情">新浪财经：实时行情</a></li><li><a href="#三新浪财经分时走势">新浪财经：分时走势</a></li><li><a href="#四新浪财经分钟-k-线">新浪财经：分钟 K 线</a></li><li><a href="#五新浪财经日-k-线">新浪财经：日 K 线</a></li><li><a href="#六天勤快期官方指数与主连">天勤（快期）官方指数与主连</a></li><li><a href="#七加权指数算法">加权指数算法</a></li><li><a href="#八字段口径对照">字段口径对照</a></li><li><a href="#九缓存策略">缓存策略</a></li><li><a href="#十反爬与兼容处理">反爬与兼容处理</a></li><li><a href="#十一本项目自身的-http-接口">本项目自身的 HTTP 接口</a></li></ol>
+<hr>
+<h2 id="h-一-数据源总览">一、数据源总览</h2>
+<div class="tw"><table><thead><tr><th>数据</th><th>来源</th><th>是否需要账号</th><th>说明</th></tr></thead><tbody><tr><td>实时行情快照</td><td>新浪财经</td><td>否</td><td><code>hq.sinajs.cn</code></td></tr><tr><td>当日分时</td><td>新浪财经</td><td>否</td><td><code>stock2.finance.sina.com.cn</code></td></tr><tr><td>分钟 K 线</td><td>新浪财经</td><td>否</td><td>同上，单次上限约 1023 根</td></tr><tr><td>日 K 线</td><td>新浪财经</td><td>否</td><td>同上，可回溯约 4~7 年</td></tr><tr><td>加权指数（本地）</td><td><strong>本地自研算法</strong></td><td>否</td><td>用新浪各合约数据合成</td></tr><tr><td>加权指数（官方）</td><td>天勤（快期）</td><td><strong>是</strong>（免费注册）</td><td><code>KQ.i</code> / <code>KQ.m</code>，仅作对照与可选口径</td></tr></tbody></table></div>
+<p>所有请求统一使用：</p>
+<pre><code>User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
+            (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36
+Referer:    https://finance.sina.com.cn</code></pre>
+<p>并且<strong>绕过系统代理直连</strong>（<code>ProxyHandler({})</code>），避免本机代理端口漂移导致 502。</p>
+<hr>
+<h2 id="h-二-新浪财经-实时行情">二、新浪财经：实时行情</h2>
+<h3 id="h-请求">请求</h3>
+<pre><code>GET https://hq.sinajs.cn/list=nf_SA2701
+Referer: https://finance.sina.com.cn</code></pre>
+<ul><li>代码格式：<code>nf_</code> + 合约代码</li><li><strong>支持批量</strong>：多个代码用英文逗号连接，一次最多约 100 个</li></ul>
+<pre><code>  GET https://hq.sinajs.cn/list=nf_SA2701,nf_SA2705,nf_SA0</code></pre>
+<p>本项目按 <strong>40 个一批</strong> 分组请求。</p>
+<blockquote><p>⚠️ <strong>必须带 <code>Referer</code></strong>，否则新浪会返回空内容。</p></blockquote>
+<h3 id="h-响应">响应</h3>
+<pre><code>var hq_str_nf_SA2701="纯碱2701,1010.000,1011.000,995.000,1001.000,...,2026-10-09,23:00:00,1";</code></pre>
+<h3 id="h-商品期货字段布局-44-字段">商品期货字段布局（44 字段）</h3>
+<p>适用于<strong>郑商所 / 大商所 / 上期所 / 广期所</strong>。下表为本项目实际使用的下标：</p>
+<div class="tw"><table><thead><tr><th>下标</th><th>字段</th><th>项目内名称</th><th>说明</th></tr></thead><tbody><tr><td><code>f[0]</code></td><td>名称</td><td><code>name</code></td><td>如 <code>纯碱2701</code></td></tr><tr><td><code>f[2]</code></td><td>开盘价</td><td><code>open</code></td><td>含夜盘</td></tr><tr><td><code>f[3]</code></td><td>最高价</td><td><code>high</code></td><td></td></tr><tr><td><code>f[4]</code></td><td>最低价</td><td><code>low</code></td><td></td></tr><tr><td><code>f[6]</code></td><td>买一价</td><td><code>bid</code></td><td></td></tr><tr><td><code>f[7]</code></td><td>卖一价</td><td><code>ask</code></td><td></td></tr><tr><td><code>f[8]</code></td><td>最新价</td><td><code>last</code></td><td></td></tr><tr><td><code>f[9]</code></td><td>昨收盘</td><td><code>preclose</code></td><td><strong>分时图基准线</strong>用这个</td></tr><tr><td><code>f[10]</code></td><td>昨结算</td><td><code>presettle</code></td><td><strong>涨跌幅基准</strong>用这个</td></tr><tr><td><code>f[13]</code></td><td>持仓量</td><td><code>oi</code></td><td>单位：手</td></tr><tr><td><code>f[14]</code></td><td>成交量</td><td><code>volume</code></td><td>单位：手</td></tr><tr><td><code>f[15]</code></td><td>交易所代码</td><td><code>exchange</code></td><td>需映射为中文名</td></tr></tbody></table></div>
+<h3 id="h-中金所字段布局-50-字段">中金所字段布局（50 字段）</h3>
+<p>适用于<strong>股指期货 / 国债期货</strong>（中金所）。结构与商品期货<strong>完全不同</strong>，</p>
+<p><code>f[0]</code> 直接是价格，<strong>没有名称字段</strong>：</p>
+<div class="tw"><table><thead><tr><th>下标</th><th>字段</th><th>项目内名称</th></tr></thead><tbody><tr><td><code>f[0]</code></td><td>开盘价</td><td><code>open</code></td></tr><tr><td><code>f[1]</code></td><td>最高价</td><td><code>high</code></td></tr><tr><td><code>f[2]</code></td><td>最低价</td><td><code>low</code></td></tr><tr><td><code>f[3]</code></td><td>最新价</td><td><code>last</code></td></tr><tr><td><code>f[4]</code></td><td>成交量</td><td><code>volume</code></td></tr><tr><td><code>f[5]</code></td><td>成交额</td><td>（未使用）</td></tr><tr><td><code>f[6]</code></td><td>持仓量</td><td><code>oi</code></td></tr><tr><td><code>f[9]</code></td><td>结算价</td><td><code>settle</code>（<strong>盘中常为无效值</strong>）</td></tr><tr><td><code>f[10]</code></td><td>昨结算</td><td><code>presettle</code></td></tr><tr><td><code>f[11]</code> / <code>f[12]</code></td><td>买量 / 卖量</td><td><code>bidvol</code> / <code>askvol</code></td></tr><tr><td><code>f[13]</code> / <code>f[14]</code></td><td>买价 / 卖价</td><td><code>bid</code> / <code>ask</code></td></tr></tbody></table></div>
+<h3 id="h-中金所的两个特殊处理">中金所的两个特殊处理</h3>
+<ol><li><strong>名称缺失</strong>：中金所行情不带名称，项目用「品种中文名 + 主力」兜底（如「沪深300主力」）。</li><li><strong>买卖盘与量仓可能全为 0</strong>：项目会用<strong>同品种成交量最大的月份合约</strong>快照</li></ol>
+<p>回填空缺字段（<strong>只补空缺，不覆盖自身有效值</strong>），并据此重算涨跌。</p>
+<h3 id="h-交易所代码映射">交易所代码映射</h3>
+<div class="tw"><table><thead><tr><th>新浪代码</th><th>中文名</th></tr></thead><tbody><tr><td><code>CFFEX</code></td><td>中金所</td></tr><tr><td><code>SHFE</code></td><td>上期所</td></tr><tr><td><code>DCE</code></td><td>大商所</td></tr><tr><td><code>CZCE</code></td><td>郑商所</td></tr><tr><td><code>GFEX</code></td><td>广期所</td></tr></tbody></table></div>
+<hr>
+<h2 id="h-三-新浪财经-分时走势">三、新浪财经：分时走势</h2>
+<h3 id="h-请求">请求</h3>
+<pre><code>GET https://stock2.finance.sina.com.cn/futures/api/jsonp.php/var%20t=/InnerFuturesNewService.getMinLine?symbol=SA2701</code></pre>
+<ul><li>返回 <strong>JSONP</strong>，需剥离 <code>var t=(...)</code> 外壳</li><li>单次返回<strong>当日全部分时点</strong></li></ul>
+<h3 id="h-响应结构">响应结构</h3>
+<pre><code>[
+  { "date": "2026-10-09", "time": "21:00:00", "price": "1007", "average": "1008",
+    "volume": "44239", "position": "1185430" },
+  ...
+]</code></pre>
+<div class="tw"><table><thead><tr><th>字段</th><th>含义</th></tr></thead><tbody><tr><td><code>date</code></td><td>日期</td></tr><tr><td><code>time</code></td><td>时:分:秒</td></tr><tr><td><code>price</code></td><td>该分钟最新价</td></tr><tr><td><code>average</code></td><td>当日均价（VWAP）</td></tr><tr><td><code>volume</code></td><td>该分钟成交量</td></tr><tr><td><code>position</code></td><td>持仓量</td></tr></tbody></table></div>
+<h3 id="h-交易时段自动还原">交易时段自动还原</h3>
+<p><strong>本项目不硬编码任何交易时段</strong>。后端用 1 分钟 K 线还原该合约的完整分钟序列，</p>
+<p>从而自动得出该品种的交易时段格子数。例如：</p>
+<ul><li>纯碱（SA）= 夜盘 <code>21:00-22:59</code> + 日盘 <code>09:00-14:59</code> = <strong>345 格</strong></li><li>中金所股指 = 无夜盘，日盘时段也不同</li></ul>
+<p>换任何品种都自动适配，横轴按整段交易时段摊满全宽。</p>
+<hr>
+<h2 id="h-四-新浪财经-分钟-k-线">四、新浪财经：分钟 K 线</h2>
+<h3 id="h-请求">请求</h3>
+<pre><code>GET https://stock2.finance.sina.com.cn/futures/api/jsonp.php/var%20t=/InnerFuturesNewService.getFewMinLine?symbol=SA2701&amp;type=5</code></pre>
+<div class="tw"><table><thead><tr><th>参数</th><th>取值</th><th>说明</th></tr></thead><tbody><tr><td><code>symbol</code></td><td>合约代码</td><td></td></tr><tr><td><code>type</code></td><td><code>1</code> / <code>5</code> / <code>15</code> / <code>30</code> / <code>60</code> / <code>120</code></td><td>分钟数</td></tr></tbody></table></div>
+<h3 id="h-响应结构">响应结构</h3>
+<pre><code>[
+  { "d": "2026-10-09 21:00:00", "o": "1010", "h": "1011", "l": "1009",
+    "c": "1010", "v": "1234", "p": "1185430" },
+  ...
+]</code></pre>
+<div class="tw"><table><thead><tr><th>字段</th><th>含义</th></tr></thead><tbody><tr><td><code>d</code></td><td>时间 <code>YYYY-MM-DD HH:MM:SS</code></td></tr><tr><td><code>o</code> / <code>h</code> / <code>l</code> / <code>c</code></td><td>开 / 高 / 低 / 收</td></tr><tr><td><code>v</code></td><td>成交量</td></tr><tr><td><code>p</code></td><td>持仓量</td></tr></tbody></table></div>
+<blockquote><p>⚠️ <strong>单次上限约 1023 根</strong>，这是上游接口限制，无法通过参数突破。</p><p>因此分钟周期只能看到最近约 1023 根。<strong>日 K 不受此限。</strong></p></blockquote>
+<hr>
+<h2 id="h-五-新浪财经-日-k-线">五、新浪财经：日 K 线</h2>
+<h3 id="h-请求">请求</h3>
+<pre><code>GET https://stock2.finance.sina.com.cn/futures/api/jsonp.php/var%20t=/InnerFuturesNewService.getDailyKLine?symbol=SA2701</code></pre>
+<ul><li>返回该合约<strong>自上市以来</strong>的完整日 K</li><li>实测可回溯约 <strong>4~7 年</strong>（铜 CU 可到 2018-06，纯碱 SA 可到 2019-12）</li></ul>
+<h3 id="h-响应结构">响应结构</h3>
+<p>与分钟 K 线同构：</p>
+<pre><code>[
+  { "d": "2026-10-09", "o": "1010", "h": "1011", "l": "995",
+    "c": "1001", "v": "544401", "p": "1189921" },
+  ...
+]</code></pre>
+<div class="tw"><table><thead><tr><th>字段</th><th>含义</th></tr></thead><tbody><tr><td><code>d</code></td><td>交易日期</td></tr><tr><td><code>o</code> / <code>h</code> / <code>l</code> / <code>c</code></td><td>开 / 高 / 低 / 收</td></tr><tr><td><code>v</code></td><td>成交量（手）</td></tr><tr><td><code>p</code></td><td>持仓量（手）</td></tr></tbody></table></div>
+<h3 id="h-周-月-年-k-由日-k-合成">周 / 月 / 年 K 由日 K 合成</h3>
+<p>上游没有周月年 K 接口，本项目在<strong>前端</strong>由日 K 合成：</p>
+<pre><code>开盘价 = 该周期第一根日K的开盘价
+最高价 = 该周期内最高价的最大值
+最低价 = 该周期内最低价的最小值
+收盘价 = 该周期最后一根日K的收盘价
+成交量 = 该周期内成交量求和
+持仓量 = 该周期最后一根日K的持仓量（期末值）</code></pre>
+<hr>
+<h2 id="h-六-天勤-快期-官方指数与主连">六、天勤（快期）官方指数与主连</h2>
+<p><strong>仅在使用「天勤」指数口径时需要</strong>。官方文档：&lt;https://www.shinnytech.com/&gt;</p>
+<h3 id="h-认证">认证</h3>
+<pre><code>import tqsdk
+
+# ⚠️ 必须传 TqAuth 对象，传元组/裸字符串会静默变成 self._auth is None
+auth = tqsdk.TqAuth("账号", "密码")
+api = tqsdk.TqApi(auth=auth, web_gui=False, disable_print=True)</code></pre>
+<div class="tw"><table><thead><tr><th>参数</th><th>作用</th></tr></thead><tbody><tr><td><code>auth</code></td><td><strong>必须</strong>是 <code>TqAuth</code> 对象</td></tr><tr><td><code>web_gui=False</code></td><td>不启动本地 Web 面板</td></tr><tr><td><code>disable_print=True</code></td><td>抑制免责声明、账户信息等刷屏日志</td></tr></tbody></table></div>
+<blockquote><p><strong>预热技巧</strong>：<code>TqApi</code> 构造后数据通道尚未就绪，直接查 <code>KQ.i</code> / <code>KQ.m</code> 会偶发超时。</p><p>先 <code>api.get_quote("SHFE.rb2601")</code> 订阅一个必然存在的合约，把通道带起来即可稳定。</p></blockquote>
+<h3 id="h-代码格式">代码格式</h3>
+<div class="tw"><table><thead><tr><th>代码</th><th>含义</th><th>示例</th></tr></thead><tbody><tr><td><code>KQ.i@&lt;交易所&gt;.&lt;品种&gt;</code></td><td><strong>指数</strong></td><td><code>KQ.i@CZCE.SA</code></td></tr><tr><td><code>KQ.m@&lt;交易所&gt;.&lt;品种&gt;</code></td><td><strong>主连</strong></td><td><code>KQ.m@CZCE.SA</code></td></tr></tbody></table></div>
+<h3 id="h-交易所大小写-极易踩坑">⚠️ 交易所大小写（极易踩坑）</h3>
+<div class="tw"><table><thead><tr><th>交易所</th><th>大小写</th><th>正确示例</th></tr></thead><tbody><tr><td><strong>CZCE</strong>（郑商所）</td><td><strong>大写</strong></td><td><code>CZCE.SA</code></td></tr><tr><td><strong>CFFEX</strong>（中金所）</td><td><strong>大写</strong></td><td><code>CFFEX.IF</code></td></tr><tr><td>SHFE（上期所）</td><td>小写</td><td><code>SHFE.rb</code></td></tr><tr><td>DCE（大商所）</td><td>小写</td><td><code>DCE.m</code></td></tr><tr><td>GFEX（广期所）</td><td>小写</td><td><code>GFEX.lc</code></td></tr><tr><td>INE（上海国际能源）</td><td>小写</td><td><code>INE.sc</code></td></tr></tbody></table></div>
+<p>写错会报 <code>non-existent instrument</code>。</p>
+<h3 id="h-返回类型不一致-坑">返回类型不一致（坑）</h3>
+<div class="tw"><table><thead><tr><th>代码类型</th><th>返回类型</th><th>取值方式</th></tr></thead><tbody><tr><td><code>KQ.m</code>（主连）</td><td><code>Quote</code></td><td><code>getattr</code> 或 <code>[]</code> 均可</td></tr><tr><td><code>KQ.i</code>（指数）</td><td><code>D</code>（<strong>dict 子类</strong>）</td><td><strong><code>getattr</code> 无效</strong>，必须用 <code>s["字段名"]</code></td></tr></tbody></table></div>
+<p>本项目统一用 <code>s[字段名]</code> 取值以兼容两种类型。</p>
+<h3 id="h-字段名">字段名</h3>
+<div class="tw"><table><thead><tr><th>字段</th><th>说明</th></tr></thead><tbody><tr><td><code>last_price</code></td><td>最新价</td></tr><tr><td><code>open</code> / <code>highest</code> / <code>lowest</code></td><td><strong>开 / 高 / 低</strong>（注意<strong>没有</strong> <code>open_price</code>）</td></tr><tr><td><code>pre_settlement</code></td><td>昨结算</td></tr><tr><td><code>pre_close</code></td><td>昨收盘</td></tr><tr><td><code>volume</code></td><td>成交量</td></tr><tr><td><code>open_interest</code></td><td>持仓量</td></tr><tr><td><code>bid_price1</code> / <code>ask_price1</code></td><td>买一 / 卖一</td></tr></tbody></table></div>
+<h3 id="h-nan-陷阱-本项目真实生产事故">⚠️ NaN 陷阱（本项目真实生产事故）</h3>
+<p><strong>非交易时段</strong>天勤会把 <code>bid_price1</code> / <code>ask_price1</code> 等返回为 <code>nan</code>。</p>
+<p>Python 的 <code>json.dumps</code> 默认会把 <code>nan</code> 写成<strong>裸 <code>NaN</code></strong>——这是<strong>非法 JSON</strong>，</p>
+<p>浏览器 <code>res.json()</code> 会直接抛 <code>Unexpected token 'N'</code>，导致「天勤」档<strong>整档失效</strong>。</p>
+<p>本项目做了<strong>双保险</strong>修复：</p>
+<ol><li><strong>源头收敛</strong>：<code>fnum()</code> / <code>inum()</code> 把 <code>nan</code> / <code>±Infinity</code> 统一转为 <code>0</code>；</li><li><strong>响应层兜底</strong>：<code>json.dumps(..., allow_nan=False)</code>，失败则走 <code>_json_safe()</code> 递归把非法浮点降级为 <code>null</code>。</li></ol>
+<h3 id="h-交叉验证结果">交叉验证结果</h3>
+<p>本地持仓量加权指数 vs 天勤官方 <code>KQ.i</code>（同一次采样）：</p>
+<div class="tw"><table><thead><tr><th>品种</th><th>本地加权</th><th>天勤官方</th><th>偏差</th></tr></thead><tbody><tr><td>SA 纯碱</td><td>1008.87</td><td>1009.0</td><td>+0.013%</td></tr><tr><td>RB 螺纹钢</td><td>3096.69</td><td>3097.0</td><td>+0.010%</td></tr><tr><td>M 豆粕</td><td>3311.87</td><td>3312.0</td><td>+0.004%</td></tr><tr><td>IF 沪深300</td><td>4243.59</td><td>4243.3</td><td>−0.007%</td></tr><tr><td>LC 碳酸锂</td><td>116501.76</td><td>116549.0</td><td>+0.041%</td></tr><tr><td>CU 铜</td><td>110069.64</td><td>110072.0</td><td>+0.002%</td></tr></tbody></table></div>
+<p><strong>5 家交易所 6 个品种偏差全部 ≤ 0.041%</strong>，证明本地加权算法可信。</p>
+<hr>
+<h2 id="h-七-加权指数算法">七、加权指数算法</h2>
+<h3 id="h-为什么需要自己合成">为什么需要自己合成</h3>
+<p>新浪<strong>没有真正的加权指数</strong>（<code>SA99</code> / <code>SA888</code> 之类的代码实测返回空）。</p>
+<p>而加权指数比主力连续更能反映整个品种的真实价格水平，所以本项目本地合成。</p>
+<h3 id="h-快照-实时行情-算法">快照（实时行情）算法</h3>
+<pre><code>指数最新价 = Σ(合约最新价 × 合约权重) / Σ(合约权重)
+指数昨结   = Σ(合约昨结价 × 合约权重) / Σ(合约权重)   → 涨跌口径与单合约一致
+指数开/高/低 = 各字段同权重加权
+指数成交量/持仓量 = Σ(各合约)</code></pre>
+<ul><li><strong>权重 = 各合约的持仓量</strong>（<code>weight=oi</code>，默认）或<strong>成交量</strong>（<code>weight=vol</code>）</li><li><strong>主力连续 XX0 不参与</strong>（它只是主力月份的影子，纳入会重复计权）</li><li>权重明细随接口返回（<code>components</code> 字段），可核查</li><li>性能：快照只取覆盖 97% 权重的前 N 个合约（3~8 个）</li></ul>
+<h3 id="h-分时算法">分时算法</h3>
+<p>各成分合约的分时点按<strong>时间戳对齐</strong>后加权：</p>
+<ol><li>取所有成分合约时间戳的<strong>并集</strong>；</li><li>每个合约在缺失的时刻<strong>用前收盘价前向填充</strong>（尚未开盘的时刻为 <code>None</code>，不参与加权）；</li><li>逐时刻按该时刻的持仓量加权。</li></ol>
+<h3 id="h-k-线算法-日-k-与分钟线用-两套-口径">K 线算法：日 K 与分钟线用<strong>两套</strong>口径</h3>
+<p>这是本项目最容易出错的算法点。<strong>历史日 K 必须逐根动态加权</strong>：</p>
+<div class="tw"><table><thead><tr><th></th><th>分钟线（1/5/…/120 分）</th><th>日 K（历史长序列）</th></tr></thead><tbody><tr><td><strong>成分合约</strong></td><td>当刻持仓量 Top-N（3~8 个）</td><td><strong>枚举历史上出现过的全部月份合约</strong></td></tr><tr><td><strong>权重</strong></td><td>当刻持仓量，<strong>固定不变</strong></td><td><strong>每根 K 线自身的持仓量</strong>（逐 bar 变化）</td></tr><tr><td><strong>理由</strong></td><td>分钟线只覆盖当日，主力月份不会变</td><td>主力月份会随时间轮换，用今天的名单加权历史会<strong>严重漏算</strong></td></tr></tbody></table></div>
+<h4 id="h-实测教训-曾低估-200-倍">实测教训（曾低估 200 倍）</h4>
+<p>曾用「今天的 Top-N + 固定权重」合成历史日 K，结果：</p>
+<div class="tw"><table><thead><tr><th>日期</th><th>合成成交量</th><th>主力连续成交量</th><th>偏差</th></tr></thead><tbody><tr><td>2026-03-16</td><td>5,452 手</td><td>1,156,521 手</td><td><strong>低估约 200 倍</strong></td></tr></tbody></table></div>
+<p>原因：当天真正的近月合约是 <strong>SA2605</strong>（成交 115 万手），但它<strong>不在今天的成分名单里</strong>。</p>
+<p>改为「全合约枚举 + 逐 bar 动态持仓量加权」后，成交量与主力连续量级一致。</p>
+<h4 id="h-两个配套细节">两个配套细节</h4>
+<p><strong>① 合约枚举深度：<code>all_contract_codes(product, years_back=7)</code></strong></p>
+<p>必须回溯 <strong>7 年</strong>才能覆盖新浪日 K 的实际历史。默认只回溯 3 年时会漏掉</p>
+<p>2019 / 2022 年的当月合约（如 <code>CU2204</code> 当日成交 6.9 万手），成交量被低估数百倍。</p>
+<div class="tw"><table><thead><tr><th>品种</th><th>加权日 K 根数</th><th>起始日期</th></tr></thead><tbody><tr><td>RBW 螺纹</td><td>2,014</td><td>2018-06-19</td></tr><tr><td>CUW 铜</td><td>2,014</td><td>2018-06-19</td></tr><tr><td>MW 豆粕</td><td>1,995</td><td>2018-07-16</td></tr><tr><td>AUW 黄金</td><td>1,972</td><td>2018-08-16</td></tr><tr><td>IFW 沪深300</td><td>1,869</td><td>2019-01-21</td></tr><tr><td>SAW 纯碱</td><td>1,656</td><td>2019-12-06</td></tr></tbody></table></div>
+<p><strong>② 真实覆盖率门限：<code>MIN_REAL_COVER = 0.9</code></strong></p>
+<p>固定权重模式下，若某根 K 线的「<strong>有真实行情</strong>成分权重 / <strong>全体</strong>成分权重」低于 0.9，</p>
+<p>则<strong>丢弃该根</strong>，避免合约刚上市、多数成分无数据时算出脏值。</p>
+<blockquote><p>注意分母是<strong>全体成分权重</strong>而不是「当刻可用权重」。</p><p>早期版本用了后者（在可用成分内重新归一化），导致只有 1 个成分也能通过门限，</p><p>算出过 1371 的脏值（真实约 1010）。</p></blockquote>
+<hr>
+<h2 id="h-八-字段口径对照">八、字段口径对照</h2>
+<h3 id="h-涨跌基准">涨跌基准</h3>
+<div class="tw"><table><thead><tr><th>用途</th><th>基准</th><th>原因</th></tr></thead><tbody><tr><td><strong>头部涨跌 / 涨跌幅</strong></td><td><strong>昨结算价</strong></td><td>与交易所、主流期货软件一致（期货按结算价做每日盈亏）</td></tr><tr><td><strong>分时图基准线</strong></td><td><strong>昨收盘价</strong></td><td>与新浪分时图口径一致</td></tr></tbody></table></div>
+<p>两者口径不同是<strong>刻意为之</strong>，不是 bug。</p>
+<h3 id="h-量仓口径">量仓口径</h3>
+<div class="tw"><table><thead><tr><th>字段</th><th>口径</th></tr></thead><tbody><tr><td>成交量</td><td><strong>双边</strong>（买卖各计一次），单位：手</td></tr><tr><td>持仓量</td><td><strong>双边</strong>，单位：手</td></tr></tbody></table></div>
+<p>与新浪财经网页、交易所公布口径一致。</p>
+<hr>
+<h2 id="h-九-缓存策略">九、缓存策略</h2>
+<p>内部使用 TTL 缓存，避免频繁打上游：</p>
+<div class="tw"><table><thead><tr><th>数据</th><th>TTL</th></tr></thead><tbody><tr><td>实时行情</td><td>交易时段 <strong>2~15 秒</strong></td></tr><tr><td>分时 / K 线</td><td>数秒</td></tr><tr><td>品种表</td><td>较长（中文名变动不频繁）</td></tr><tr><td>加权指数</td><td>独立缓存（<code>wquote:</code> / <code>wts:</code> / <code>wk:</code>）</td></tr><tr><td>休市期间</td><td><strong>自动拉长</strong></td></tr></tbody></table></div>
+<p><strong>上游异常时自动回退上一次成功数据</strong>，保证界面不空白。</p>
+<hr>
+<h2 id="h-十-反爬与兼容处理">十、反爬与兼容处理</h2>
+<div class="tw"><table><thead><tr><th>问题</th><th>处理</th></tr></thead><tbody><tr><td>需要 <code>Referer</code> 校验</td><td>所有新浪请求统一带 <code>Referer: https://finance.sina.com.cn</code></td></tr><tr><td>需要 <code>User-Agent</code></td><td>统一使用 Chrome UA</td></tr><tr><td>本机系统代理干扰（502）</td><td>用 <code>ProxyHandler({})</code> <strong>绕过代理直连</strong></td></tr><tr><td>JSONP 外壳</td><td>统一 <code>parse_jsonp()</code> 剥离 <code>var t=(...)</code></td></tr><tr><td>中金所无名称 / 无买卖盘</td><td>用同品种成交量最大的月份合约回填空缺字段</td></tr><tr><td>已停牌品种仍返回最后一次报价</td><td>用<strong>主力日 K 的最后日期</strong>判断（&gt;10 天无交易视为停牌，置灰）</td></tr><tr><td>天勤 NaN 污染 JSON</td><td>源头 <code>fnum</code>/<code>inum</code> 收敛 + 响应层 <code>allow_nan=False</code></td></tr><tr><td>UTC/时区</td><td>全部使用本地时间（<code>Asia/Shanghai</code> 语义），不做时区转换</td></tr></tbody></table></div>
+<hr>
+<h2 id="h-十一-本项目自身的-http-接口">十一、本项目自身的 HTTP 接口</h2>
+<p>服务默认监听 <code>http://127.0.0.1:8686/</code>。</p>
+<div class="tw"><table><thead><tr><th>路径</th><th>说明</th></tr></thead><tbody><tr><td><code>GET /</code></td><td>前端面板页面</td></tr><tr><td><code>GET /api/quote?symbol=SA2701</code></td><td>实时行情（支持主力连续 <code>SA0</code>、加权 <code>SAW</code>）</td></tr><tr><td><code>GET /api/products</code></td><td>全品种树（79 品种 × 5 交易所，含中文名 / 停牌标记）</td></tr><tr><td><code>GET /api/symbols?product=SA</code></td><td>同品种合约列表（加权指数置顶 + 主连 + 全部月份）</td></tr><tr><td><code>GET /api/symbols?product=SA&amp;weight=vol</code></td><td>加权口径切换：<code>oi</code>（默认）/ <code>vol</code> / <code>tianqin</code></td></tr><tr><td><code>GET /api/timeshare?symbol=SA2701</code></td><td>分时数据（含完整交易时段 <code>slots</code>，供横轴自适应）</td></tr><tr><td><code>GET /api/kline?symbol=SA2701&amp;period=day</code></td><td>K 线（<code>1/5/15/30/60/120/day</code>）</td></tr><tr><td><code>GET /api/tq/status</code></td><td>天勤（快期）连接状态</td></tr><tr><td><code>GET /api/health</code></td><td>健康检查</td></tr></tbody></table></div>
+<p><strong>加权指数</strong>只需把 <code>symbol</code> 换成 <code>XXW</code>（如 <code>SAW</code>）：</p>
+<pre><code>GET /api/quote?symbol=SAW
+GET /api/timeshare?symbol=SAW
+GET /api/kline?symbol=SAW&amp;period=day</code></pre>
+<p><strong>统一响应结构</strong>：</p>
+<pre><code>{ "ok": true, "ts": 1791562297278, "data": { ... } }</code></pre>
+<p>失败时 <code>ok=false</code> 并带 <code>error</code> 字段。</p>
+<hr>
+<h2 id="h-免责声明">免责声明</h2>
+<ul><li>所有数据来自第三方公开接口（新浪财经、天勤），本项目<strong>不保证</strong>其准确性、完整性与实时性；</li><li>加权指数为本地算法合成，<strong>非交易所官方发布</strong>；</li><li>本项目仅供<strong>技术学习与行情查看</strong>，<strong>不构成任何投资建议</strong>；</li><li>因使用本项目产生的任何交易损失，由使用者自行承担。</li></ul>
+<hr>
+<h2 id="h-参考链接">参考链接</h2>
+<ul><li>新浪财经期货频道：&lt;https://finance.sina.com.cn/futures/&gt;</li><li>新浪财经纯碱 2701 行情页（本项目版面参照）：&lt;https://finance.sina.com.cn/futures/quotes/SA2701.shtml&gt;</li><li>天勤量化官网：&lt;https://www.shinnytech.com/&gt;</li><li>快期账号注册：&lt;https://account.shinnytech.com/&gt;</li></ul>
+<hr>
+<p>设计：<strong>公歧子</strong>　微信：<strong>gongqizi0</strong></p>
+</main>
+<footer>
+  <div class="row">
+    <a href="index.html">首页</a>
+    <a href="usage.html">使用说明</a>
+    <a href="datasource.html">数据源说明</a>
+    <a href="https://github.com/chenzhuanxin/domestic-futures-panel" target="_blank" rel="noopener">源码仓库</a>
+  </div>
+  <div class="sign">设计：<b>公歧子</b>　微信：<span id="wx" title="点击复制微信号">gongqizi0</span></div>
+</footer>
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeBtn'),saved=null;
+  try{saved=localStorage.getItem('site.theme');}catch(e){}
+  if(saved)root.dataset.theme=saved;
+  function sync(){btn.textContent=root.dataset.theme==='dark'?'浅色模式':'深色模式';}
+  sync();
+  btn.addEventListener('click',function(){
+    root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';
+    try{localStorage.setItem('site.theme',root.dataset.theme);}catch(e){}
+    sync();
+  });
+  var wx=document.getElementById('wx');
+  if(wx)wx.addEventListener('click',function(){
+    var t='gongqizi0',old=wx.textContent;
+    var done=function(){wx.textContent='已复制 '+t;
+      setTimeout(function(){wx.textContent=old;},1400);};
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(done,done);
+    }else{
+      var ta=document.createElement('textarea');ta.value=t;
+      ta.style.position='fixed';ta.style.opacity='0';
+      document.body.appendChild(ta);ta.select();
+      try{document.execCommand('copy');}catch(e){}
+      document.body.removeChild(ta);done();
+    }
+  });
+})();
+</script>
+</body>
+</html>
