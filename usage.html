@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>使用说明 · 国内期货行情面板</title>
+<meta name="description" content="国内期货行情面板完整使用说明：安装运行、界面导览、行情字段、周期与指标、加权指数、全部操作、常见问题。">
+<style>
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#1c2333;--bd:#30363d;
+  --fg:#e6edf3;--fg2:#8b949e;--fg3:#6e7681;
+  --acc:#f0883e;--acc2:#58a6ff;--code-bg:#161b22;
+}
+html[data-theme="light"]{
+  --bg:#fff;--bg2:#f6f8fa;--bg3:#eef2f7;--bd:#d0d7de;
+  --fg:#1f2328;--fg2:#59636e;--fg3:#818b98;
+  --acc:#bc4c00;--acc2:#0969da;--code-bg:#f6f8fa;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);line-height:1.78;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased}
+a{color:var(--acc2);text-decoration:none}
+a:hover{text-decoration:underline}
+header{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--bd)}
+header .bar{max-width:900px;margin:0 auto;padding:0 22px;display:flex;align-items:center;
+  gap:16px;height:58px;font-size:14px}
+header .logo{font-weight:700;font-size:15px;white-space:nowrap;display:flex;align-items:center;gap:8px}
+header .logo i{width:8px;height:8px;border-radius:50%;background:var(--acc);
+  box-shadow:0 0 9px var(--acc);display:block}
+header nav{margin-left:auto;display:flex;gap:18px;align-items:center}
+header nav a{color:var(--fg2)}
+header nav a:hover{color:var(--fg);text-decoration:none}
+#themeBtn{background:var(--bg3);border:1px solid var(--bd);color:var(--fg2);
+  border-radius:7px;padding:5px 11px;cursor:pointer;font-size:12.5px;font-family:inherit}
+#themeBtn:hover{color:var(--fg);border-color:var(--fg3)}
+main{max-width:900px;margin:0 auto;padding:38px 22px 70px}
+h1{font-size:clamp(25px,4vw,34px);font-weight:800;letter-spacing:-.02em;
+  line-height:1.28;margin:8px 0 10px;padding-bottom:20px;border-bottom:1px solid var(--bd)}
+h2{font-size:21px;font-weight:700;margin:44px 0 12px;letter-spacing:-.01em;
+  padding-top:6px;scroll-margin-top:74px}
+h3{font-size:17px;font-weight:650;margin:30px 0 10px;scroll-margin-top:74px}
+h4{font-size:15px;font-weight:650;margin:22px 0 8px}
+p{margin:12px 0;color:var(--fg)}
+strong{font-weight:650;color:var(--fg)}
+ul,ol{margin:12px 0 12px 24px}
+li{margin:6px 0;color:var(--fg2)}
+li strong,li b{color:var(--fg)}
+hr{border:0;border-top:1px solid var(--bd);margin:38px 0}
+blockquote{border-left:3px solid var(--acc);background:var(--bg2);
+  border-radius:0 8px 8px 0;padding:12px 18px;margin:16px 0;color:var(--fg2)}
+blockquote p{margin:5px 0;color:var(--fg2)}
+pre{background:var(--code-bg);border:1px solid var(--bd);border-radius:9px;
+  padding:15px 17px;overflow-x:auto;font-size:13px;line-height:1.68;margin:15px 0}
+pre code{font-size:13px}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace}
+p code,li code,td code,th code{background:var(--bg3);border:1px solid var(--bd);
+  border-radius:4px;padding:1.5px 5.5px;font-size:12.5px;color:var(--acc)}
+pre code{background:none;border:0;color:var(--fg);padding:0}
+.tw{overflow-x:auto;margin:16px 0}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:420px}
+th,td{padding:9px 13px;text-align:left;border-bottom:1px solid var(--bd)}
+th{color:var(--fg2);font-weight:600;font-size:12.5px;background:var(--bg2);white-space:nowrap}
+tbody tr:hover{background:var(--bg2)}
+td{color:var(--fg2)}
+td b,td strong{color:var(--fg)}
+.toc{background:var(--bg2);border:1px solid var(--bd);border-radius:11px;
+  padding:16px 22px;margin:24px 0}
+.toc-h{font-size:13px;font-weight:700;color:var(--fg2);text-transform:uppercase;
+  letter-spacing:.05em;margin-bottom:9px}
+.toc ol{margin:0 0 0 20px}
+.toc li{margin:4px 0;font-size:14px}
+footer{border-top:1px solid var(--bd);padding:26px 0;max-width:900px;margin:0 auto;
+  padding-left:22px;padding-right:22px;font-size:13.5px;color:var(--fg3)}
+footer .sign b{color:var(--acc)}
+#wx{cursor:pointer;border-bottom:1px dashed var(--fg3)}
+#wx:hover{color:var(--acc)}
+footer .row{display:flex;flex-wrap:wrap;gap:8px 20px;margin-bottom:10px}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="logo"><i></i>国内期货行情面板</div>
+    <nav>
+      <a href="index.html">首页</a>
+      <a href="usage.html">使用说明</a>
+      <a href="datasource.html">数据源说明</a>
+      <a href="https://github.com/chenzhuanxin/domestic-futures-panel" target="_blank" rel="noopener">GitHub</a>
+      <button id="themeBtn" type="button">切换主题</button>
+    </nav>
+  </div>
+</header>
+<main>
+<h1 id="h-国内期货行情面板-使用说明">国内期货行情面板 · 使用说明</h1>
+<blockquote><p>一个<strong>单机运行</strong>的国内全品种期货行情面板。覆盖中金所 / 上期所 / 大商所 / 郑商所 / 广期所</p><p>共 <strong>79 个品种</strong>，支持实时行情、分时、1~120 分钟 K 线、日 / 周 / 月 / 年 K、</p><p>成交量持仓量副图、六种技术指标，并提供<strong>自研的持仓量加权指数</strong>。</p><p>设计：<strong>公歧子</strong>　微信：<strong>gongqizi0</strong></p></blockquote>
+<hr>
+<h2 id="h-目录">目录</h2>
+<ol><li><a href="#一这是什么">这是什么</a></li><li><a href="#二两种运行方式">两种运行方式</a></li><li><a href="#三界面导览">界面导览</a></li><li><a href="#四行情头部字段释义">行情头部字段释义</a></li><li><a href="#五周期与-k-线">周期与 K 线</a></li><li><a href="#六主图指标">主图指标</a></li><li><a href="#七副图一成交与持仓">副图一：成交与持仓</a></li><li><a href="#八副图二技术指标">副图二：技术指标</a></li><li><a href="#九指数口径加权-vs-主连">指数口径：加权 vs 主连</a></li><li><a href="#十图表操作全表">图表操作全表</a></li><li><a href="#十一品种与合约列表">品种与合约列表</a></li><li><a href="#十二主题与配置记忆">主题与配置记忆</a></li><li><a href="#十三命令行参数">命令行参数</a></li><li><a href="#十四url-参数">URL 参数</a></li><li><a href="#十五天勤快期账号配置">天勤（快期）账号配置</a></li><li><a href="#十六自己重新打包-exe">自己重新打包 EXE</a></li><li><a href="#十七常见问题">常见问题</a></li></ol>
+<hr>
+<h2 id="h-一-这是什么">一、这是什么</h2>
+<p>一个跑在你自己电脑上的期货行情看盘工具。核心特点：</p>
+<ul><li><strong>零成本数据</strong>：默认走新浪财经公开接口，不需要注册、不需要 Token、不需要付费行情。</li><li><strong>零依赖运行</strong>：后端是纯 Python 标准库实现，不需要 <code>pip install</code> 任何东西。</li><li><strong>单文件 EXE</strong>：已打包好 <code>期货行情面板.exe</code>，双击即用，目标电脑连 Python 都不用装。</li><li><strong>真正的加权指数</strong>：新浪没有加权指数（<code>XX99</code> / <code>XX888</code> 实测为空），本项目用<strong>全部在交易合约按持仓量加权</strong>本地合成，并与天勤官方指数交叉验证偏差 &lt; 0.05%。</li></ul>
+<blockquote><p>⚠️ <strong>免责声明</strong>：本项目仅用于技术学习与行情查看，所有数据来自第三方公开接口，</p><p>可能存在延迟或错误，<strong>不构成任何投资建议</strong>。据此交易的风险由使用者自行承担。</p></blockquote>
+<hr>
+<h2 id="h-二-两种运行方式">二、两种运行方式</h2>
+<h3 id="h-方式一-双击-exe-推荐-无需-python">方式一：双击 EXE（推荐，无需 Python）</h3>
+<ol><li>从 <a href="https://github.com/chenzhuanxin/domestic-futures-panel/releases" target="_blank" rel="noopener">Releases</a> 下载 <code>futures-panel-v1.0.0.exe</code>；</li><li>放到任意文件夹，<strong>双击运行</strong>；</li><li>会弹出一个黑色控制台窗口，显示面板地址与行情连通状态；</li><li>稍等几秒，浏览器自动打开 <code>http://127.0.0.1:8686/</code>。</li></ol>
+<pre><code>============================================================
+  国内期货行情面板  ·  数据源：新浪财经
+============================================================
+  · 默认合约：SA2701
+  · 运行方式：单文件 EXE（资源目录 C:\Users\...\Temp\_MEI123456）
+  · 天勤（快期）：已启用（内置配置）
+  · 当前状态：交易中
+  · 行情连通：纯碱2701  1001.0  -9.0 (-0.89%)  更新于 2026-10-09 23:00:00
+  · 合约列表：共 14 个挂牌合约，主力 = SA2701
+------------------------------------------------------------
+  面板地址：http://127.0.0.1:8686/
+  提示：把 tianqin.json 放到本 EXE 同目录，可覆盖内置账号
+  按 Ctrl+C 退出
+============================================================</code></pre>
+<p><strong>注意事项</strong>：</p>
+<ul><li><strong>首次启动较慢（5~20 秒）</strong>：单文件 EXE 每次启动都要把约 74 MB 解压到临时目录，属正常现象，不是卡死。</li><li><strong>关闭方式</strong>：关掉那个黑色控制台窗口，或按 <code>Ctrl+C</code>。</li><li><strong>保留黑窗口是有意的</strong>：启动失败时能直接看到报错原因；如果你更想要纯净体验，可以自己重新打包时把 <code>console=True</code> 改成 <code>console=False</code>（见<a href="#十六自己重新打包-exe">第十六节</a>）。</li><li>若提示"未配置 Python"之类的错误，说明你运行的是源码版的 <code>.bat</code>，请确认用的是 <code>.exe</code>。</li></ul>
+<h3 id="h-方式二-源码运行-需-python-3-8">方式二：源码运行（需 Python 3.8+）</h3>
+<pre><code># 1. 下载源码
+git clone https://github.com/chenzhuanxin/domestic-futures-panel.git
+cd domestic-futures-panel
+
+# 2. 直接运行（不需要 pip install，零第三方依赖）
+python server.py
+
+# 或者双击 Windows 启动脚本
+启动面板.bat</code></pre>
+<p>浏览器会自动打开 <code>http://127.0.0.1:8686/</code>。</p>
+<blockquote><p>源码运行同样支持天勤（可选）：需要额外 <code>pip install tqsdk</code>。</p></blockquote>
+<hr>
+<h2 id="h-三-界面导览">三、界面导览</h2>
+<pre><code>┌─────────────────────────────────────────────────────────────────────────────┐
+│  纯碱2701   1001.0  -9.0  -0.89%   23:00:00                      [主题]     │  ← 顶部行情条
+│  最新价 开盘 最高 最低 结算 昨结 持仓 成交 买价 卖价 买量 卖量              │
+├──────────────┬──────────────────────────────────────────────────────────────┤
+│  品种列表    │  周期：分时 1分 5分 15分 30分 60分 120分 日 周 月 年   [指标]  │
+│  （按交易所  ├──────────────────────────────────────────────────────────────┤
+│    分组）    │                                                              │
+│              │                     主 图（K 线 / 分时）                     │
+│  · 中金所    │                                                              │
+│  · 上期所    │                                                              │
+│  · 大商所    ├──────────────────────────────────────────────────────────────┤
+│  · 郑商所    │              副图一：成交量柱 + 持仓量曲线                    │
+│  · 广期所    ├──────────────────────────────────────────────────────────────┤
+│              │              副图二：MACD / KDJ / RSI / BOLL / WR / DMI       │
+│              │                                                              │
+│  同品种合约  ├──────────────────────────────────────────────────────────────┤
+│  [仓权|量权] │  ▶ 数据说明 / 操作提示（点击展开·默认收起）                   │
+│  [  天勤  ]  │  设计：公歧子    微信：gongqizi0                             │
+│  · 纯碱指数  │                                                              │
+│  · 纯碱连续  └──────────────────────────────────────────────────────────────┘
+│  · 纯碱2610
+│  · 纯碱2611
+│  ...
+└──────────────┘</code></pre>
+<p>版面参照新浪财经期货行情页设计：<strong>左边品种导航、右上合约列表、中间主图 + 双副图</strong>。</p>
+<hr>
+<h2 id="h-四-行情头部字段释义">四、行情头部字段释义</h2>
+<p>顶部行情条实时刷新，字段与口径如下：</p>
+<div class="tw"><table><thead><tr><th>字段</th><th>含义</th><th>口径说明</th></tr></thead><tbody><tr><td><strong>最新价</strong></td><td>最新成交价</td><td>涨跌与涨跌幅均<strong>相对昨结算价</strong>计算（与交易所、主流期货软件一致）</td></tr><tr><td><strong>涨跌 / 涨跌幅</strong></td><td>相对昨结算</td><td>例：昨结 1010，最新 1001 → <code>-9.0 (-0.89%)</code></td></tr><tr><td><strong>开盘价</strong></td><td>当日第一笔成交价</td><td>夜盘开盘即开始计入</td></tr><tr><td><strong>最高价 / 最低价</strong></td><td>当日最高 / 最低成交价</td><td>含夜盘</td></tr><tr><td><strong>结算价</strong></td><td>当日结算价</td><td><strong>盘中为上一交易日结算价</strong>，收盘后由交易所公布当日值</td></tr><tr><td><strong>昨结算</strong></td><td>上一交易日结算价</td><td>涨跌幅基准</td></tr><tr><td><strong>持仓量</strong></td><td>未平仓合约数（双边）</td><td>单位：手</td></tr><tr><td><strong>成交量</strong></td><td>当日累计成交（双边）</td><td>单位：手</td></tr><tr><td><strong>买价 / 卖价</strong></td><td>买一价 / 卖一价</td><td>非交易时段可能为空（显示为 0 或 <code>-</code>）</td></tr><tr><td><strong>买量 / 卖量</strong></td><td>买一量 / 卖一量</td><td>同上</td></tr></tbody></table></div>
+<blockquote><p><strong>为什么涨跌幅用昨结算而不是昨收盘？</strong></p><p>期货市场以结算价做每日盈亏结算，所以交易所和文华、博易等主流软件都用昨结算做涨跌基准。</p><p>而<strong>分时图的基准线</strong>用<strong>昨收盘价</strong>（与新浪分时图口径一致），两者口径不同是刻意为之。</p></blockquote>
+<hr>
+<h2 id="h-五-周期与-k-线">五、周期与 K 线</h2>
+<p>支持 11 个周期：</p>
+<div class="tw"><table><thead><tr><th>周期</th><th>数据来源</th><th>数量上限</th></tr></thead><tbody><tr><td><strong>分时</strong></td><td>当日分时走势</td><td>当日全部</td></tr><tr><td><strong>1 / 5 / 15 / 30 / 60 / 120 分</strong></td><td>上游分钟 K 接口</td><td>约 1023 根（上游单次上限）</td></tr><tr><td><strong>日 K</strong></td><td>上游日 K 接口</td><td>全量历史（可回溯约 4~7 年）</td></tr><tr><td><strong>周 / 月 / 年 K</strong></td><td><strong>前端由日 K 合成</strong></td><td>全量</td></tr></tbody></table></div>
+<p><strong>周 / 月 / 年 K 的合成规则</strong>：</p>
+<ul><li>开盘价 = 该周期第一根日 K 的开盘价</li><li>最高价 = 该周期内最高价的最大值</li><li>最低价 = 该周期内最低价的最小值</li><li>收盘价 = 该周期最后一根日 K 的收盘价</li><li>成交量 = 该周期内成交量<strong>求和</strong></li><li>持仓量 = 该周期<strong>最后一根</strong>日 K 的持仓量（期末值）</li></ul>
+<blockquote><p><strong>为什么分钟 K 只有约 1000 根？</strong> 这是上游接口的单次返回上限，不是本程序的限制。</p><p><strong>日 K 不受此限</strong>，可以取到该合约上市以来的完整历史。</p></blockquote>
+<h3 id="h-默认显示全量">默认显示全量</h3>
+<p>所有周期<strong>默认完整显示全部可用数据</strong>（从最新一根往前铺满），不做截断。</p>
+<p>如果你觉得太密，用滚轮或双指捏合放大即可。</p>
+<hr>
+<h2 id="h-六-主图指标">六、主图指标</h2>
+<p>主图右上角可切换 5 种主图叠加指标：</p>
+<div class="tw"><table><thead><tr><th>指标</th><th>全称</th><th>说明</th></tr></thead><tbody><tr><td><strong>MA</strong></td><td>移动平均线</td><td>默认显示 MA5 / MA10 / MA20 / MA60，四色区分</td></tr><tr><td><strong>SAR</strong></td><td>抛物线转向</td><td><strong>红点画在 K 线下方 = 多头</strong>；<strong>绿点画在 K 线上方 = 空头</strong>。图例同步显示当前多空状态</td></tr><tr><td><strong>BOLL</strong></td><td>布林带</td><td>上轨 / 中轨（20 日均线）/ 下轨，中轨为价格均线</td></tr><tr><td><strong>EXPMA</strong></td><td>指数平滑移动平均</td><td>EXPMA5 / 10 / 20 / 60，比 MA 对近期价格更敏感</td></tr><tr><td><strong>BBIBOLL</strong></td><td>BBI 布林带</td><td>以 BBI（多空指标，4 条均线平均）为中轨的布林带，比普通 BOLL 更平滑</td></tr></tbody></table></div>
+<blockquote><p><strong>关于 SAR 的颜色</strong>：红绿点是<strong>方向标识且位置分离</strong>——多头点在下、空头点在上，</p><p>不是简单的红绿交替。这样即使色盲用户也能靠位置判断多空。</p></blockquote>
+<hr>
+<h2 id="h-七-副图一-成交与持仓">七、副图一：成交与持仓</h2>
+<p>副图一上下分两区显示：</p>
+<ul><li><strong>上半区</strong>：成交量柱状图（<strong>红涨绿跌</strong>，按当日涨跌着色）</li><li><strong>下半区</strong>：持仓量曲线（叠加在副图一的下方分区）</li></ul>
+<blockquote><p>说明：这里的红绿遵循<strong>中国市场惯例</strong>（涨=红、跌=绿），与欧美相反。</p></blockquote>
+<hr>
+<h2 id="h-八-副图二-技术指标">八、副图二：技术指标</h2>
+<p>副图二可切换 6 种技术指标，<strong>选择器就放在副图二自己的位置</strong>（不占用主图工具栏）：</p>
+<div class="tw"><table><thead><tr><th>指标</th><th>参数</th><th>副图显示内容</th></tr></thead><tbody><tr><td><strong>MACD</strong></td><td>12 / 26 / 9</td><td>DIF 线、DEA 线、红绿柱（柱状图）</td></tr><tr><td><strong>KDJ</strong></td><td>9 / 3 / 3</td><td>K 线、D 线、J 线</td></tr><tr><td><strong>RSI</strong></td><td>6 / 12 / 24</td><td>三条 RSI 线</td></tr><tr><td><strong>BOLL</strong></td><td>20 / 2</td><td>上轨 / 中轨 / 下轨（选中时<strong>主图也会同步叠加布林带</strong>）</td></tr><tr><td><strong>WR</strong></td><td>14</td><td>威廉指标（注意：数值轴<strong>反向</strong>，0 在上）</td></tr><tr><td><strong>DMI</strong></td><td>14 / 6</td><td>+DI、-DI、ADX</td></tr></tbody></table></div>
+<blockquote><p><strong>分时模式下副图二也能用</strong>：程序会把分时点合成为"每分钟 K"，所以 MACD / KDJ / RSI 等在分时视图下同样可用。</p></blockquote>
+<hr>
+<h2 id="h-九-指数口径-加权-vs-主连">九、指数口径：加权 vs 主连</h2>
+<p>这是本项目最有价值的部分之一。右侧「同品种合约」标题栏有三个分段按钮：</p>
+<h3 id="h-仓权-默认-本地持仓量加权指数">仓权（默认）——本地持仓量加权指数</h3>
+<pre><code>指数最新价 = Σ(合约最新价 × 合约持仓量) / Σ(持仓量)
+指数昨结   = Σ(合约昨结价 × 合约持仓量) / Σ(持仓量)     → 涨跌口径与单合约一致
+指数开高低 = 各字段同权重加权
+成交量/持仓量 = Σ(各合约)</code></pre>
+<ul><li>成分 = <strong>该品种全部在交易的月份合约</strong>（不是只取主力）</li><li><strong>主力连续合约 XX0 不参与加权</strong>（它只是主力月份的影子，纳入会重复计权）</li><li>代码形如 <code>SAW</code>（SA + W，W = Weighted），在合约列表<strong>置顶</strong>显示，带 <code>∑</code> 标识</li><li>权重明细随接口返回，可核查</li></ul>
+<h3 id="h-量权-成交量加权指数">量权——成交量加权指数</h3>
+<p>同上公式，把持仓量换成成交量。适合观察资金活跃度分布。</p>
+<h3 id="h-天勤-官方指数">天勤——官方指数</h3>
+<p>调用天勤（快期）官方的 <code>KQ.i</code> 指数 / <code>KQ.m</code> 主连。需要配置账号（见<a href="#十五天勤快期账号配置">第十五节</a>）。</p>
+<p>未配置时该按钮自动置灰。</p>
+<blockquote><p><strong>交叉验证</strong>：本地持仓量加权指数与天勤官方指数在 5 家交易所 6 个品种上偏差全部 ≤ 0.041%，</p><p>说明本地算法是可信的。详见数据源说明文档。</p></blockquote>
+<h3 id="h-加权指数的历史-k-线">加权指数的历史 K 线</h3>
+<p>加权指数支持<strong>分时 / 1分~120分 / 日 / 周 / 月 / 年 K</strong> 全部周期：</p>
+<ul><li><strong>分钟线</strong>：各成分合约分钟线按时间对齐后加权，缺失分钟用前收盘价填充</li><li><strong>日 K</strong>：逐根枚举<strong>当时上市过的全部月份合约</strong>，按<strong>每根 K 线自身的持仓量动态加权</strong></li></ul>
+<p>（因为主力月份会随时间轮换，用今天的名单去加权历史会严重漏算）</p>
+<ul><li><strong>周 / 月 / 年 K</strong>：由加权日 K 前端合成</li></ul>
+<p>加权日 K 每品种可回溯约 <strong>1,600 ~ 2,014 根</strong>（至 2018-06）。</p>
+<hr>
+<h2 id="h-十-图表操作全表">十、图表操作全表</h2>
+<div class="tw"><table><thead><tr><th>操作</th><th>方式</th></tr></thead><tbody><tr><td><strong>缩放（改变显示根数）</strong></td><td>鼠标<strong>滚轮</strong>（以光标位置为锚点）</td></tr><tr><td><strong>缩放（触屏）</strong></td><td><strong>双指捏合</strong>（锚定两指中心）</td></tr><tr><td><strong>左右平移</strong></td><td>鼠标<strong>按住拖动</strong></td></tr><tr><td><strong>左右平移（触屏）</strong></td><td><strong>单指左右拖动</strong></td></tr><tr><td><strong>微调平移</strong></td><td>键盘 <strong>← →</strong></td></tr><tr><td><strong>放大 / 缩小</strong></td><td>键盘 <strong>+</strong> / <strong>-</strong></td></tr><tr><td><strong>复位（回到最新）</strong></td><td>键盘 <strong>R</strong>，或点 <strong>↺ 复位</strong> 按钮</td></tr><tr><td><strong>全览（显示全部数据）</strong></td><td>点 <strong>⤢ 全览</strong> 按钮</td></tr><tr><td><strong>查看某根 K 线详情</strong></td><td>鼠标移入，<strong>十字光标</strong>跟随显示开高低收 / 成交量 / 持仓量</td></tr><tr><td><strong>切换周期</strong></td><td>顶部周期按钮</td></tr><tr><td><strong>切换指标</strong></td><td>主图右上角 / 副图二自身的下拉</td></tr></tbody></table></div>
+<blockquote><p>支持触屏操作，手机、平板浏览器上也能用手指拖动和捏合缩放。</p><p>画布设置了 <code>touch-action: none</code>，所以手势不会被页面滚动抢走。</p></blockquote>
+<hr>
+<h2 id="h-十一-品种与合约列表">十一、品种与合约列表</h2>
+<h3 id="h-左侧品种列表">左侧品种列表</h3>
+<ul><li>覆盖<strong>中金所 / 上期所 / 大商所 / 郑商所 / 广期所</strong>共 79 个品种</li><li>按交易所分组，<strong>支持中文名或代码搜索</strong></li><li>品种中文名<strong>自动取自主力连续合约的实时名称</strong>（上游改名会自动跟随，无需维护常量表）</li><li><strong>已停牌品种自动识别并置灰</strong>：靠主力日 K 的最后交易日期判断（如强麦 WH、早籼稻 RI 停在 2022-2023 年）</li><li>点击品种即切换到该品种的<strong>主力连续合约（XX0）</strong>，右侧合约列表同步刷新</li></ul>
+<h3 id="h-右侧同品种合约列表">右侧同品种合约列表</h3>
+<ul><li><strong>加权指数（∑）置顶</strong></li><li>然后是<strong>主力连续（XX0）</strong></li><li>接着是该品种<strong>全部挂牌月份合约</strong></li><li><strong>主力合约单独标注</strong>（当前持仓量最大的月份）</li><li><strong>已过期合约不展示</strong>，只显示当前在交易的（与新浪财经一致）</li><li>点击任意行即切换</li></ul>
+<hr>
+<h2 id="h-十二-主题与配置记忆">十二、主题与配置记忆</h2>
+<ul><li><strong>深色 / 浅色主题</strong>一键切换，选择自动记忆</li><li>以下配置全部写入浏览器 <code>localStorage</code>，<strong>刷新后保持</strong>：</li></ul>
+<div class="tw"><table><thead><tr><th>配置项</th><th>存储键</th></tr></thead><tbody><tr><td>当前合约</td><td><code>sa.symbol</code></td></tr><tr><td>当前品种</td><td><code>sa.product</code></td></tr><tr><td>当前周期</td><td><code>sa.period</code></td></tr><tr><td>副图二指标</td><td><code>sa.ind</code></td></tr><tr><td>主图指标</td><td><code>sa.mainInd</code></td></tr><tr><td>主题</td><td><code>sa.theme</code></td></tr><tr><td>指数口径</td><td><code>sa.weightMode</code></td></tr><tr><td>底部说明展开状态</td><td><code>sa.footOpen</code></td></tr></tbody></table></div>
+<hr>
+<h2 id="h-十三-命令行参数">十三、命令行参数</h2>
+<p>EXE 与源码模式参数完全一致：</p>
+<div class="tw"><table><thead><tr><th>参数</th><th>说明</th><th>默认</th></tr></thead><tbody><tr><td><code>--symbol SA2705</code></td><td>默认合约</td><td><code>SA2701</code></td></tr><tr><td><code>--port 9000</code></td><td>监听端口（被占用自动 +1 顺延）</td><td><code>8686</code></td></tr><tr><td><code>--host 0.0.0.0</code></td><td>允许局域网访问</td><td><code>127.0.0.1</code></td></tr><tr><td><code>--no-browser</code></td><td>不自动打开浏览器</td><td>—</td></tr><tr><td><code>-v</code></td><td>打印访问日志</td><td>—</td></tr></tbody></table></div>
+<p><strong>常用场景</strong>：</p>
+<pre><code># 想默认看螺纹钢
+期货行情面板.exe --symbol RB2701
+
+# 8686 被其它程序占了，换个端口
+期货行情面板.exe --port 9000
+
+# 想让同局域网的其他设备访问（如手机）
+期货行情面板.exe --host 0.0.0.0
+# 然后在手机浏览器打开 http://&lt;你电脑的IP&gt;:8686/
+
+# 自己调试，看每个请求日志
+期货行情面板.exe -v</code></pre>
+<hr>
+<h2 id="h-十四-url-参数">十四、URL 参数</h2>
+<p>可以直接用 URL 定位到某个具体视图，方便分享或做书签：</p>
+<pre><code>http://127.0.0.1:8686/?symbol=SA2701&amp;period=day&amp;ind=MACD&amp;theme=dark</code></pre>
+<div class="tw"><table><thead><tr><th>参数</th><th>取值</th><th>说明</th></tr></thead><tbody><tr><td><code>symbol</code></td><td>如 <code>SA2701</code>、<code>SA0</code>、<code>SAW</code></td><td>指定合约（<code>0</code> = 主力连续，<code>W</code> = 加权指数）</td></tr><tr><td><code>product</code></td><td>如 <code>SA</code>、<code>RB</code></td><td>切到该品种主力连续（<strong>优先级高于本地记忆的旧合约</strong>）</td></tr><tr><td><code>period</code></td><td><code>timeshare</code> / <code>1</code> / <code>5</code> / <code>15</code> / <code>30</code> / <code>60</code> / <code>120</code> / <code>day</code> / <code>week</code> / <code>month</code> / <code>year</code></td><td>周期</td></tr><tr><td><code>ind</code></td><td><code>MACD</code> / <code>KDJ</code> / <code>RSI</code> / <code>BOLL</code> / <code>WR</code> / <code>DMI</code></td><td>副图二指标</td></tr><tr><td><code>main</code></td><td><code>MA</code> / <code>SAR</code> / <code>BOLL</code> / <code>EXPMA</code> / <code>BBIBOLL</code></td><td>主图指标</td></tr><tr><td><code>theme</code></td><td><code>light</code> / <code>dark</code></td><td>主题</td></tr><tr><td><code>weight</code></td><td><code>oi</code> / <code>vol</code> / <code>tianqin</code></td><td>指数口径（仓权 / 量权 / 天勤）</td></tr></tbody></table></div>
+<hr>
+<h2 id="h-十五-天勤-快期-账号配置">十五、天勤（快期）账号配置</h2>
+<p><strong>只有想用「天勤」档官方指数时才需要配置</strong>。其余功能全部不需要账号。</p>
+<h3 id="h-获取账号">获取账号</h3>
+<p>到 &lt;https://account.shinnytech.com/&gt; 免费注册一个快期账号。</p>
+<h3 id="h-配置方式">配置方式</h3>
+<p><strong>EXE 用户</strong>：把 <code>tianqin.json</code> 放在 <strong>EXE 同目录</strong>（外置配置优先于内置）：</p>
+<pre><code>{
+  "auth_user": "你的快期账号",
+  "auth_pass": "你的快期密码",
+  "enabled": true
+}</code></pre>
+<ul><li>想<strong>停用</strong>天勤：把 <code>enabled</code> 改成 <code>false</code>（或删掉外置文件回落到内置配置）</li><li><strong>换账号不必重新打包</strong>，改这个文件即可，下次查询自动生效</li></ul>
+<p><strong>源码用户</strong>：在项目根目录放 <code>tianqin.json</code>，内容同上，然后重启。</p>
+<p>也可以用环境变量指定配置路径（优先级最高）：</p>
+<pre><code>set TIANQIN_CONFIG=D:\my\tianqin.json</code></pre>
+<h3 id="h-查看连接状态">查看连接状态</h3>
+<p>访问 <code>http://127.0.0.1:8686/api/tq/status</code>：</p>
+<pre><code>{
+  "installed": true,        // tqsdk 是否可用
+  "version": "3.10.2",
+  "configured": true,       // 账号是否已配置
+  "connected": true,        // 是否已成功建立连接
+  "configPath": "...",      // 实际使用的配置文件
+  "configExternal": false   // 用的是内置还是外置配置
+}</code></pre>
+<hr>
+<h2 id="h-十六-自己重新打包-exe">十六、自己重新打包 EXE</h2>
+<pre><code># 一键打包（Windows）
+打包.bat
+
+# 或手动执行
+python -m PyInstaller --clean --noconfirm 期货行情面板.spec</code></pre>
+<p>产物在 <code>dist/期货行情面板.exe</code>。</p>
+<p><strong>打包要点</strong>（改 spec 前务必看一遍，这几个坑都实际踩过）：</p>
+<div class="tw"><table><thead><tr><th>事项</th><th>说明</th></tr></thead><tbody><tr><td><strong>不要 exclude <code>numpy</code> / <code>pandas</code></strong></td><td><code>tqsdk/api.py</code> 顶层无保护地 <code>import numpy</code> / <code>import pandas</code>，排除后 tqsdk 直接不可用（体积从 22MB 涨到 74MB 就是这么来的）</td></tr><tr><td><strong>不要 exclude <code>unittest</code></strong></td><td>tqsdk 依赖链会走到 <code>numpy.testing._private.utils</code>，那里顶层 import unittest</td></tr><tr><td><strong>tqsdk 是惰性导入</strong></td><td>PyInstaller 静态分析扫不到，必须用 <code>hookspath</code> 指定自定义 hook 补齐依赖</td></tr><tr><td><strong>资源路径要区分</strong></td><td>打包后 <code>__file__</code> 指向临时目录，只读资源要用 <code>sys._MEIPASS</code></td></tr><tr><td><strong>保留控制台</strong></td><td>spec 里 <code>console=True</code> 便于排错，想要无窗口改成 <code>False</code></td></tr></tbody></table></div>
+<hr>
+<h2 id="h-十七-常见问题">十七、常见问题</h2>
+<p><strong>Q：提示"行情接口异常"？</strong></p>
+<p>多为网络问题或系统代理干扰。本程序已自动绕过系统代理直连；若公司内网封锁了新浪财经域名，请检查防火墙。</p>
+<p><strong>Q：分钟 K 只有约 1000 根？</strong></p>
+<p>上游接口单次上限约 1023 根，属数据源限制。日 K 不受此限。</p>
+<p><strong>Q：加权日 K 第一次打开很慢（几秒到十几秒）？</strong></p>
+<p>需要先枚举并拉取数十个月份合约的日 K 再逐根合成，结果有缓存；之后切周期都是瞬时的。</p>
+<p><strong>Q：休市时数据不动？</strong></p>
+<p>正常。休市期间自动降低刷新频率，夜盘 21:00 恢复。</p>
+<p><strong>Q：双击 EXE 后等了十几秒才出界面？</strong></p>
+<p>正常。单文件模式每次启动都要把约 74 MB 解压到临时目录，之后启动自检又要拉一次行情。</p>
+<p><strong>Q：想改默认品种？</strong></p>
+<p><code>期货行情面板.exe --symbol RB2701</code>，或改 <code>启动面板.bat</code> 里的参数。</p>
+<p><strong>Q：端口 8686 被占用怎么办？</strong></p>
+<p>程序会自动顺延到 8687、8688……控制台会提示实际使用的端口。也可以手动 <code>--port 9000</code>。</p>
+<p><strong>Q：手机能看吗？</strong></p>
+<p>可以。用 <code>--host 0.0.0.0</code> 启动，手机浏览器访问 <code>http://&lt;电脑局域网IP&gt;:8686/</code>。界面支持触屏拖动与捏合缩放。</p>
+<p><strong>Q：数据准确吗？</strong></p>
+<p>行情来自新浪财经公开接口，与新浪网页一致；加权指数为本地自研算法，已与天勤官方指数交叉验证（偏差 &lt; 0.05%）。<strong>但数据仅供参考，不构成投资建议。</strong></p>
+<hr>
+<h2 id="h-相关文档">相关文档</h2>
+<ul><li><a href="数据源说明.md">数据源说明</a> —— 每个接口的 URL、参数、字段、口径与算法细节</li><li><a href="https://github.com/chenzhuanxin/domestic-futures-panel" target="_blank" rel="noopener">项目主页</a></li></ul>
+<hr>
+<p>设计：<strong>公歧子</strong>　微信：<strong>gongqizi0</strong></p>
+</main>
+<footer>
+  <div class="row">
+    <a href="index.html">首页</a>
+    <a href="usage.html">使用说明</a>
+    <a href="datasource.html">数据源说明</a>
+    <a href="https://github.com/chenzhuanxin/domestic-futures-panel" target="_blank" rel="noopener">源码仓库</a>
+  </div>
+  <div class="sign">设计：<b>公歧子</b>　微信：<span id="wx" title="点击复制微信号">gongqizi0</span></div>
+</footer>
+<script>
+(function(){
+  var root=document.documentElement,btn=document.getElementById('themeBtn'),saved=null;
+  try{saved=localStorage.getItem('site.theme');}catch(e){}
+  if(saved)root.dataset.theme=saved;
+  function sync(){btn.textContent=root.dataset.theme==='dark'?'浅色模式':'深色模式';}
+  sync();
+  btn.addEventListener('click',function(){
+    root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';
+    try{localStorage.setItem('site.theme',root.dataset.theme);}catch(e){}
+    sync();
+  });
+  var wx=document.getElementById('wx');
+  if(wx)wx.addEventListener('click',function(){
+    var t='gongqizi0',old=wx.textContent;
+    var done=function(){wx.textContent='已复制 '+t;
+      setTimeout(function(){wx.textContent=old;},1400);};
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(done,done);
+    }else{
+      var ta=document.createElement('textarea');ta.value=t;
+      ta.style.position='fixed';ta.style.opacity='0';
+      document.body.appendChild(ta);ta.select();
+      try{document.execCommand('copy');}catch(e){}
+      document.body.removeChild(ta);done();
+    }
+  });
+})();
+</script>
+</body>
+</html>
