@@ -1,0 +1,8 @@
+{
+  "_说明": "天勤（快期）账号配置。把本文件改名为 tianqin.json 后填写自己的账号即可启用。",
+  "_注册": "没有账号去 https://account.shinnytech.com/ 免费注册（快期账号通用）",
+  "_优先级": "环境变量 TIANQIN_CONFIG > EXE/脚本同目录的 tianqin.json > 打包时内置的 tianqin.json",
+  "auth_user": "",
+  "auth_pass": "",
+  "enabled": false
+}
