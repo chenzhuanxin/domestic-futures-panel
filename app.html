@@ -1,0 +1,2533 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>纯碱期货行情面板</title>
+<style>
+/* ===================== 主题变量 ===================== */
+html[data-theme="dark"] {
+  --bg:        #0d1117;
+  --panel:     #131920;
+  --panel-2:   #171e27;
+  --border:    #232b36;
+  --grid:      #1d242e;
+  --grid-2:    #2a333f;
+  --text:      #dfe6ee;
+  --text-dim:  #7d8896;
+  --text-weak: #566273;
+  --up:        #ef4b4b;
+  --down:      #12b886;
+  --flat:      #8b949e;
+  --accent:    #3b82f6;
+  --shadow:    0 2px 14px rgba(0,0,0,.45);
+  --hover:     #1c242f;
+  --chip:      #1a212a;
+}
+html[data-theme="light"] {
+  --bg:        #eef1f5;
+  --panel:     #ffffff;
+  --panel-2:   #f7f9fb;
+  --border:    #dfe4ea;
+  --grid:      #eef1f5;
+  --grid-2:    #dde3ea;
+  --text:      #1f2328;
+  --text-dim:  #6b7684;
+  --text-weak: #98a2b0;
+  --up:        #e03131;
+  --down:      #0ca678;
+  --flat:      #8b949e;
+  --accent:    #2563eb;
+  --shadow:    0 2px 12px rgba(20,30,45,.10);
+  --hover:     #f0f3f7;
+  --chip:      #f1f4f8;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.5 "Microsoft YaHei", "PingFang SC", "Segoe UI", Helvetica, Arial, sans-serif;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+.num { font-family: "Consolas", "SF Mono", "Menlo", monospace; font-variant-numeric: tabular-nums; }
+.up   { color: var(--up); }
+.down { color: var(--down); }
+.flat { color: var(--flat); }
+.hide { display: none !important; }
+
+/* ===================== 顶部报价条 ===================== */
+.topbar {
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 14px 9px;
+}
+.head-line { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.brand { display: flex; align-items: baseline; gap: 8px; }
+.brand .mkt { font-size: 11px; color: var(--text-dim); border: 1px solid var(--border); border-radius: 3px; padding: 0 4px; }
+.brand .name { font-size: 17px; font-weight: 700; letter-spacing: .4px; }
+.brand .code { font-size: 11px; color: var(--text-weak); }
+
+.bigprice { display: flex; align-items: baseline; gap: 12px; }
+.bigprice .last { font-size: 30px; font-weight: 700; line-height: 1; }
+.bigprice .chg  { font-size: 14px; font-weight: 600; }
+
+.timestamp { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-dim); margin-left: auto; }
+.timestamp .tdate { font-size: 11px; color: var(--text-weak); }
+.dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--text-weak); vertical-align: middle; }
+.dot.on { background: var(--down); box-shadow: 0 0 6px var(--down); }
+.dot.off { background: #b7791f; }
+
+.stat-grid {
+  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px 12px; margin-top: 9px;
+  padding-top: 8px; border-top: 1px dashed var(--border);
+}
+.stat { display: flex; align-items: baseline; gap: 6px; font-size: 12px; min-width: 0; }
+.stat .k { color: var(--text-dim); white-space: nowrap; }
+.stat .v { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.topright { display: flex; align-items: center; gap: 8px; }
+
+/* ===================== 工具条 ===================== */
+.toolbar {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 6px 12px;
+  background: var(--panel-2);
+  border-bottom: 1px solid var(--border);
+}
+.group { display: flex; align-items: center; gap: 2px; }
+.group > .lbl { font-size: 11px; color: var(--text-dim); margin-right: 5px; }
+.btn {
+  border: 1px solid transparent; background: transparent; color: var(--text-dim);
+  font: inherit; font-size: 12px; padding: 3px 9px; border-radius: 4px;
+  cursor: pointer; white-space: nowrap; transition: .12s;
+}
+.btn:hover { background: var(--hover); color: var(--text); }
+.btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn.ghost { border-color: var(--border); }
+.sep { width: 1px; height: 16px; background: var(--border); }
+.note { font-size: 11px; color: var(--text-weak); }
+
+/* 副图二指标切换（浮层，位置由 JS 对齐到副图二顶部） */
+.sub-ind-bar {
+  position: absolute; left: 7px; z-index: 5;
+  display: flex; align-items: center; gap: 2px;
+}
+.sub-ind-bar .btn { padding: 0 7px; font-size: 11px; line-height: 18px; height: 18px; border-radius: 3px; }
+.sub-ind-bar .lbl { font-size: 10px; color: var(--text-weak); margin-right: 4px; }
+
+/* ===================== 主体 ===================== */
+.app {
+  flex: 1; min-height: 0;
+  display: grid; grid-template-columns: 1fr 292px;
+}
+.chartcol { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+/* .chart-wrap 占满剩余高度（底部给 footer 留位），仍用 absolute 让 canvas 铺满 */
+.chart-wrap { position: relative; flex: 1 1 auto; min-height: 0; }
+#chart, #overlay { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#overlay { pointer-events: none; z-index: 1; }
+#chart { cursor: crosshair; touch-action: none; }   /* 触屏拖动/捏合不被页面滚动抢走 */
+
+.empty {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 8px; color: var(--text-dim); font-size: 13px;
+  background: var(--panel); pointer-events: none; z-index: 6;
+}
+.spinner {
+  width: 22px; height: 22px; border: 2px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===================== 侧栏（品种树 + 合约列表） ===================== */
+.sidebar {
+  background: var(--panel); border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; min-height: 0; min-width: 0;
+}
+.side-head {
+  padding: 8px 12px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: baseline; justify-content: space-between;
+  flex: 0 0 auto;
+}
+.side-head .t { font-size: 12px; font-weight: 700; }
+.side-head .s { font-size: 11px; color: var(--text-weak); }
+
+/* 指数口径切换（自算加权 / 天勤官方） */
+.side-head.idxmode { align-items: center; padding: 6px 10px; gap: 8px; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 4px; overflow: hidden; flex: 0 0 auto; }
+.seg button {
+  border: 0; background: transparent; color: var(--text-weak);
+  font-family: inherit; font-size: 11px; line-height: 1; padding: 4px 7px;
+  cursor: pointer; transition: background .12s, color .12s;
+}
+.seg button + button { border-left: 1px solid var(--border); }
+.seg button:hover { color: var(--text); background: rgba(127,127,127,.10); }
+.seg button.on { background: var(--accent); color: #fff; }
+.seg button:disabled { opacity: .38; cursor: not-allowed; background: transparent; color: var(--text-weak); }
+.seg button.on:disabled { background: var(--accent); color: #fff; opacity: .55; }
+
+/* 搜索框 */
+.side-search { padding: 7px 10px; border-bottom: 1px solid var(--border); flex: 0 0 auto; }
+.side-search input {
+  width: 100%; box-sizing: border-box; padding: 5px 8px; font-size: 12px;
+  color: var(--text); background: var(--bg);
+  border: 1px solid var(--border); border-radius: 4px; outline: none;
+  font-family: inherit;
+}
+.side-search input:focus { border-color: var(--accent); }
+.side-search input::placeholder { color: var(--text-weak); }
+
+/* 品种树 */
+.prod-list { overflow-y: auto; flex: 1 1 52%; min-height: 90px; }
+.prod-list::-webkit-scrollbar, .sym-list::-webkit-scrollbar { width: 8px; }
+.prod-list::-webkit-scrollbar-thumb, .sym-list::-webkit-scrollbar-thumb {
+  background: var(--border); border-radius: 4px;
+}
+.exch {
+  position: sticky; top: 0; z-index: 1;
+  padding: 4px 10px; font-size: 11px; font-weight: 700;
+  color: var(--text-dim); background: var(--panel2, var(--panel));
+  border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between;
+}
+.exch .n { color: var(--text-weak); font-weight: 400; }
+.prod {
+  display: grid; grid-template-columns: 34px 1fr auto; gap: 6px;
+  align-items: center; padding: 5px 10px; cursor: pointer;
+  border-bottom: 1px solid var(--border); transition: .1s;
+}
+.prod:hover { background: var(--hover); }
+.prod.sel { background: var(--accent); }
+.prod.sel .c, .prod.sel .n, .prod.sel .p { color: #fff !important; }
+.prod .c { font-size: 12px; font-weight: 700; letter-spacing: .3px; }
+.prod .n { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.prod .p { font-size: 11.5px; text-align: right; min-width: 50px; }
+.prod.dead { opacity: .38; }
+.prod.dead .n::after { content: ' 停牌'; font-size: 10px; color: var(--text-weak); }
+
+.sym-list { overflow-y: auto; flex: 1 1 48%; min-height: 80px; border-top: 1px solid var(--border); }
+.sym {
+  display: grid; grid-template-columns: 1fr auto auto;
+  gap: 8px; align-items: center;
+  padding: 6px 12px; cursor: pointer; border-bottom: 1px solid var(--border);
+  transition: .12s;
+}
+.sym:hover { background: var(--hover); }
+.sym.sel { background: var(--accent); }
+.sym.sel .c, .sym.sel .p, .sym.sel .g { color: #fff !important; }
+.sym .c { font-size: 12.5px; font-weight: 600; }
+.sym .p { font-size: 12.5px; text-align: right; min-width: 52px; }
+.sym .g { font-size: 11.5px; text-align: right; min-width: 52px; }
+.tag {
+  font-size: 10px; padding: 0 4px; border-radius: 2px; margin-left: 4px;
+  background: var(--up); color: #fff; vertical-align: 1px;
+}
+/* 加权指数行：置顶、带底色，与真实合约区分 */
+.sym.weighted {
+  background: linear-gradient(90deg, rgba(120,150,255,.14), transparent 72%);
+  border-bottom: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+}
+.sym.weighted .c { letter-spacing: .3px; }
+.tag.wt { background: var(--accent); }
+.sym.weighted.sel { background: var(--accent); }
+.sym.weighted.sel .tag.wt { background: rgba(255,255,255,.28); }
+.side-foot { padding: 6px 12px; font-size: 11px; color: var(--text-weak); border-top: 1px solid var(--border); flex: 0 0 auto; }
+
+/* ===================== 图表底部：操作提示 + 数据说明 + 署名 ===================== */
+.chart-foot { flex: 0 0 auto; border-top: 1px solid var(--border); background: var(--panel); }
+
+/* 折叠头（可点击展开/收起） */
+.cf-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 12px; font-size: 11px; color: var(--text-weak);
+  cursor: pointer; user-select: none; line-height: 1.5;
+}
+.cf-head:hover { color: var(--text); }
+.cf-head .arw { transition: transform .15s; font-size: 9px; display: inline-block; }
+.chart-foot.open .cf-head .arw { transform: rotate(90deg); }
+.cf-head .cf-t { font-weight: 700; font-size: 11px; }
+.cf-body { display: none; padding: 2px 12px 10px; }
+.chart-foot.open .cf-body { display: block; }
+
+.cf-body h4 { margin: 9px 0 4px; font-size: 11px; font-weight: 700; color: var(--text); }
+.cf-body h4:first-child { margin-top: 2px; }
+.cf-body p, .cf-body li { margin: 3px 0; font-size: 11px; line-height: 1.65; color: var(--text-weak); }
+.cf-body ul { margin: 3px 0; padding-left: 17px; }
+.cf-body code {
+  font-family: ui-monospace, Consolas, monospace; font-size: 10.5px;
+  background: rgba(127,127,127,.15); border-radius: 3px; padding: 0 3px; color: var(--text);
+}
+.cf-body b { color: var(--text); }
+.cf-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0 22px; }
+
+/* 署名 */
+.cf-sign {
+  display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline;
+  padding: 7px 12px; border-top: 1px solid var(--border);
+  font-size: 11px; color: var(--text-weak);
+}
+.cf-sign b { color: var(--text); font-weight: 700; }
+.cf-sign .wechat {
+  font-family: ui-monospace, Consolas, monospace; letter-spacing: .3px;
+  cursor: pointer; border-bottom: 1px dashed currentColor;
+}
+.cf-sign .wechat:hover { color: var(--accent); }
+.cf-sign .copied { color: var(--accent); border-bottom-color: transparent; }
+
+@media (max-width: 1180px) { .stat-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .stat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .timestamp { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- ========== 顶部报价 ========== -->
+<header class="topbar">
+  <div class="head-line">
+    <div class="brand">
+      <span class="mkt" id="hExchange">郑商所</span>
+      <span class="name" id="hName">纯碱2701</span>
+      <span class="code" id="hCode">SA2701</span>
+    </div>
+    <div class="bigprice">
+      <span class="last num flat" id="hLast">--</span>
+      <span class="chg num flat" id="hChg">--</span>
+    </div>
+    <div class="timestamp">
+      <span class="dot" id="hDot"></span>
+      <span id="hTime">--:--:--</span>
+      <span class="tdate" id="hDate">---- -- --</span>
+      <span class="tdate" id="hSess"></span>
+    </div>
+    <div class="topright">
+      <button class="btn ghost" id="btnTheme" title="切换深浅色">◐ 主题</button>
+    </div>
+  </div>
+  <div class="stat-grid">
+    <div class="stat"><span class="k">最新价</span><span class="v num" id="sLast">--</span></div>
+    <div class="stat"><span class="k">开盘价</span><span class="v num" id="sOpen">--</span></div>
+    <div class="stat"><span class="k">最高价</span><span class="v num" id="sHigh">--</span></div>
+    <div class="stat"><span class="k">最低价</span><span class="v num" id="sLow">--</span></div>
+    <div class="stat"><span class="k">结算价</span><span class="v num" id="sSettle">--</span></div>
+    <div class="stat"><span class="k">昨结算</span><span class="v num" id="sPre">--</span></div>
+    <div class="stat"><span class="k">持仓量</span><span class="v num" id="sOI">--</span></div>
+    <div class="stat"><span class="k">成交量</span><span class="v num" id="sVol">--</span></div>
+    <div class="stat"><span class="k">买　价</span><span class="v num" id="sBid">--</span></div>
+    <div class="stat"><span class="k">卖　价</span><span class="v num" id="sAsk">--</span></div>
+    <div class="stat"><span class="k">买　量</span><span class="v num" id="sBidVol">--</span></div>
+    <div class="stat"><span class="k">卖　量</span><span class="v num" id="sAskVol">--</span></div>
+  </div>
+</header>
+
+<!-- ========== 工具条 ========== -->
+<div class="toolbar">
+  <div class="group" id="periodGroup">
+    <span class="lbl">周期</span>
+    <button class="btn" data-period="timeshare">分时</button>
+    <button class="btn" data-period="1">1分</button>
+    <button class="btn" data-period="5">5分</button>
+    <button class="btn" data-period="15">15分</button>
+    <button class="btn" data-period="30">30分</button>
+    <button class="btn" data-period="60">60分</button>
+    <button class="btn" data-period="120">120分</button>
+    <button class="btn" data-period="day">日K</button>
+    <button class="btn" data-period="week" title="由日K合成">周K</button>
+    <button class="btn" data-period="month" title="由日K合成">月K</button>
+    <button class="btn" data-period="year" title="由日K合成">年K</button>
+  </div>
+  <div class="sep"></div>
+  <div class="group" id="mainIndGroup">
+    <span class="lbl">主图</span>
+    <button class="btn" data-main="MA" title="移动平均线 MA5/10/20/60">MA</button>
+    <button class="btn" data-main="SAR" title="抛物线转向 SAR">SAR</button>
+    <button class="btn" data-main="BOLL" title="布林带 BOLL(20,2)">BOLL</button>
+    <button class="btn" data-main="EXPMA" title="指数平滑均线 EXPMA5/10/20/60">EXPMA</button>
+    <button class="btn" data-main="BBIBOLL" title="多空布林线 BBIBOLL(11,3)">BBIBOLL</button>
+  </div>
+  <div class="sep"></div>
+  <div class="group">
+    <button class="btn ghost" id="btnReset" title="回到最新">↺ 复位</button>
+    <button class="btn ghost" id="btnFit" title="显示全部">⤢ 全览</button>
+  </div>
+  <span class="note" id="srcNote">数据源：新浪财经期货 · 滚轮缩放 / 拖动平移 / 触屏捏合 · 周月年K由日K合成 · 见底部「数据说明」</span>
+</div>
+
+<!-- ========== 图表 + 侧栏 ========== -->
+<div class="app">
+  <div class="chartcol">
+    <div class="chart-wrap">
+      <canvas id="chart"></canvas>
+      <canvas id="overlay"></canvas>
+      <div class="sub-ind-bar" id="subIndBar">
+        <span class="lbl">副图二</span>
+        <button class="btn" data-ind="MACD">MACD</button>
+        <button class="btn" data-ind="KDJ">KDJ</button>
+        <button class="btn" data-ind="RSI">RSI</button>
+        <button class="btn" data-ind="BOLL">BOLL</button>
+        <button class="btn" data-ind="WR">WR</button>
+        <button class="btn" data-ind="DMI">DMI</button>
+      </div>
+      <div class="empty" id="emptyBox" style="display:none"><div class="spinner"></div><div id="emptyText">加载数据…</div></div>
+    </div>
+
+    <!-- 图表底部：操作提示 + 可折叠数据说明 + 署名 -->
+    <div class="chart-foot" id="chartFoot">
+      <div class="cf-head" id="cfHead" role="button" tabindex="0" aria-expanded="false">
+        <span class="arw">▶</span>
+        <span class="cf-t">数据说明 / 操作提示</span>
+        <span>（点击展开 · 默认收起）</span>
+      </div>
+      <div class="cf-body" id="cfBody">
+        <div class="cf-cols">
+          <div>
+            <h4>操作</h4>
+            <ul>
+              <li><b>滚轮</b>：以光标为锚点缩放 K 线根数</li>
+              <li><b>按住拖动</b>：左右平移查看历史</li>
+              <li><b>触屏</b>：单指拖动平移，双指捏合缩放</li>
+              <li><b>方向键 ← →</b> 平移，<b>+ / −</b> 缩放，<b>R</b> 复位</li>
+              <li><b>↺ 复位</b> 回到最新，<b>⤢ 全览</b> 显示全部数据</li>
+              <li><b>十字光标</b>：鼠标移入查看该根 K 线的开高低收/量/仓</li>
+            </ul>
+          </div>
+          <div>
+            <h4>数据范围</h4>
+            <ul>
+              <li>分钟周期（1/5/15/30/60/120）为上游单次上限内<b>最近约 1023 根</b></li>
+              <li>日K 为全部可得历史；<b>周/月/年K 由日K 前端合成</b></li>
+              <li>加权指数各行数据由该品种<b>全部在交易合约</b>合成，非交易所官方发布</li>
+            </ul>
+          </div>
+          <div>
+            <h4>加权指数口径</h4>
+            <ul>
+              <li><b>仓权</b>：<code>Σ(合约价×持仓)/Σ持仓</code>，与官方指数口径最接近</li>
+              <li><b>量权</b>：<code>Σ(合约价×成交量)/Σ成交量</code></li>
+              <li><b>天勤</b>：天勤（快期）官方指数 <code>KQ.i</code>，需配置账号</li>
+              <li>主力连续 <code>XX0</code> 不参与加权，避免主力月重复计权</li>
+              <li>成分合约尚未上市/开盘的时段不出 K 线，避免脏值</li>
+            </ul>
+          </div>
+          <div>
+            <h4>数据源与声明</h4>
+            <ul>
+              <li>行情来源：<b>新浪财经期货</b>（直连，绕过系统代理）</li>
+              <li>指数/主连可选：<b>天勤（快期）</b> <code>KQ.i</code> / <code>KQ.m</code></li>
+              <li>缓存 TTL：交易时段 2~15 秒，休市自动拉长；上游异常回退上次成功数据</li>
+              <li>本工具仅供学习研究，<b>不构成任何投资建议</b>，据此操作风险自负</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="cf-sign">
+        <span>设计：<b>公歧子</b></span>
+        <span>微信：<span class="wechat" id="cfWechat" title="点击复制微信号">gongqizi0</span></span>
+      </div>
+    </div>
+  </div>
+  <aside class="sidebar">
+    <div class="side-search">
+      <input id="prodSearch" type="search" placeholder="搜索品种代码 / 名称（如 SA、纯碱）" autocomplete="off">
+    </div>
+    <div class="side-head">
+      <span class="t" id="prodHeadT">全部品种</span>
+      <span class="s" id="prodHeadS">--</span>
+    </div>
+    <div class="prod-list" id="prodList"></div>
+    <div class="side-head idxmode">
+      <span class="t">同品种合约</span>
+      <span class="seg" id="idxSeg">
+        <button type="button" data-wm="oi" title="按持仓量加权合成指数（本地计算，覆盖全部在交易合约）">仓权</button>
+        <button type="button" data-wm="vol" title="按成交量加权合成指数（本地计算）">量权</button>
+        <button type="button" data-wm="tianqin" id="idxTqBtn" title="使用天勤（快期）官方指数 KQ.i，需在 tianqin.json 配置账号">天勤</button>
+      </span>
+    </div>
+    <div class="sym-list" id="symList"></div>
+    <div class="side-foot" id="sideFoot">★ 主力 · ∑ 加权指数（按持仓量合成，置顶） · 灰色为停牌品种</div>
+  </aside>
+</div>
+
+<script>
+/* =====================================================================
+ * 纯碱期货行情面板 · 前端
+ * 纯 Canvas 绘制，无任何外部依赖（可离线运行）
+ * ===================================================================== */
+const App = (() => {
+'use strict';
+
+/* ------------------------------ 常量与工具 ------------------------------ */
+const $ = id => document.getElementById(id);
+
+/* 当前品种（可在左侧品种列表切换）。合约代码 = 品种 + 月份，主力连续为 "品种0"。 */
+let PRODUCT = tryLS('sa.product') || 'SA';
+const DEFAULT_SYMBOL = 'SA2701';
+
+const PERIOD_LABEL = {
+  timeshare: '分时', '1': '1分钟', '5': '5分钟', '15': '15分钟', '30': '30分钟',
+  '60': '60分钟', '120': '120分钟', day: '日K', week: '周K', month: '月K', year: '年K'
+};
+const SYNTH_PERIODS = { week: 1, month: 1, year: 1 };   // 由日K合成
+
+function px2(v, n = 2) {
+  if (v === null || v === undefined || isNaN(v)) return '--';
+  return Number(v).toFixed(n);
+}
+function fmtVol(v) {
+  if (v === null || v === undefined || isNaN(v)) return '--';
+  v = Number(v);
+  if (Math.abs(v) >= 1e8) return (v / 1e8).toFixed(2) + '亿';
+  if (Math.abs(v) >= 1e4) return (v / 1e4).toFixed(2) + '万';
+  return String(Math.round(v));
+}
+function cls(v) { return v > 0 ? 'up' : (v < 0 ? 'down' : 'flat'); }
+function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+function tryLS(key, val) {
+  try {
+    if (val === undefined) return localStorage.getItem(key);
+    localStorage.setItem(key, val);
+  } catch (e) { /* file:// 下不可用，忽略 */ }
+  return null;
+}
+function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+function fmtDate(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+
+/* ------------------------------ 交易时段 ------------------------------ */
+function isTrading() {
+  const n = new Date(), wd = n.getDay();
+  if (wd === 0 || wd === 6) return false;
+  const m = n.getHours() * 60 + n.getMinutes();
+  return (m >= 21 * 60 && m <= 23 * 60)
+      || (m >= 9 * 60 && m <= 10 * 60 + 15)
+      || (m >= 10 * 60 + 30 && m <= 11 * 60 + 30)
+      || (m >= 13 * 60 + 30 && m <= 15 * 60);
+}
+
+/* ============================== 技术指标 ============================== */
+const TA = {
+  sma(vals, n) {
+    const out = new Array(vals.length).fill(null);
+    let sum = 0;
+    for (let i = 0; i < vals.length; i++) {
+      sum += vals[i];
+      if (i >= n) sum -= vals[i - n];
+      if (i >= n - 1) out[i] = sum / n;
+    }
+    return out;
+  },
+  ema(vals, n) {
+    const out = new Array(vals.length).fill(null);
+    const k = 2 / (n + 1);
+    let prev = null;
+    for (let i = 0; i < vals.length; i++) {
+      prev = prev === null ? vals[i] : vals[i] * k + prev * (1 - k);
+      out[i] = prev;
+    }
+    return out;
+  },
+  macd(closes, fast = 12, slow = 26, sig = 9) {
+    const ef = TA.ema(closes, fast), es = TA.ema(closes, slow);
+    const dif = closes.map((_, i) => ef[i] - es[i]);
+    const dea = TA.ema(dif, sig);
+    const bar = dif.map((v, i) => (v - dea[i]) * 2);
+    return { dif, dea, bar };
+  },
+  kdj(bars, n = 9, m1 = 3, m2 = 3) {
+    const K = [], D = [], J = [];
+    let k = 50, d = 50;
+    for (let i = 0; i < bars.length; i++) {
+      const s = Math.max(0, i - n + 1);
+      let hh = -Infinity, ll = Infinity;
+      for (let j = s; j <= i; j++) { if (bars[j].h > hh) hh = bars[j].h; if (bars[j].l < ll) ll = bars[j].l; }
+      const rsv = (hh === ll) ? 50 : (bars[i].c - ll) / (hh - ll) * 100;
+      k = (m1 - 1) / m1 * k + rsv / m1;
+      d = (m2 - 1) / m2 * d + k / m2;
+      K.push(k); D.push(d); J.push(3 * k - 2 * d);
+    }
+    return { K, D, J };
+  },
+  rsi(closes, n = 6) {
+    const out = new Array(closes.length).fill(null);
+    let up = 0, dn = 0;
+    for (let i = 1; i < closes.length; i++) {
+      const ch = closes[i] - closes[i - 1];
+      const u = ch > 0 ? ch : 0, dd = ch < 0 ? -ch : 0;
+      if (i <= n) {
+        up += u; dn += dd;
+        if (i === n) out[i] = (up + dn) === 0 ? 50 : up / (up + dn) * 100;
+      } else {
+        up = (up * (n - 1) + u) / n;
+        dn = (dn * (n - 1) + dd) / n;
+        out[i] = (up + dn) === 0 ? 50 : up / (up + dn) * 100;
+      }
+    }
+    return out;
+  },
+  boll(closes, n = 20, k = 2) {
+    const mid = TA.sma(closes, n);
+    const up = [], dn = [], bw = [], pb = [];
+    for (let i = 0; i < closes.length; i++) {
+      if (mid[i] === null) { up.push(null); dn.push(null); bw.push(null); pb.push(null); continue; }
+      let s = 0;
+      for (let j = i - n + 1; j <= i; j++) s += (closes[j] - mid[i]) ** 2;
+      const sd = Math.sqrt(s / n);
+      const u = mid[i] + k * sd, l = mid[i] - k * sd;
+      up.push(u); dn.push(l);
+      bw.push(mid[i] ? (u - l) / mid[i] * 100 : 0);
+      pb.push(u === l ? 0.5 : (closes[i] - l) / (u - l));
+    }
+    return { mid, up, dn, bw, pb };
+  },
+  wr(bars, n = 14) {
+    const out = new Array(bars.length).fill(null);
+    for (let i = n - 1; i < bars.length; i++) {
+      let hh = -Infinity, ll = Infinity;
+      for (let j = i - n + 1; j <= i; j++) { if (bars[j].h > hh) hh = bars[j].h; if (bars[j].l < ll) ll = bars[j].l; }
+      out[i] = (hh === ll) ? 50 : (hh - bars[i].c) / (hh - ll) * 100;
+    }
+    return out;
+  },
+  dmi(bars, n = 14, adxN = 6) {
+    const len = bars.length;
+    const pdi = new Array(len).fill(null), mdi = new Array(len).fill(null);
+    const adx = new Array(len).fill(null), adxr = new Array(len).fill(null);
+    const tr = [], pdm = [], mdm = [];
+    for (let i = 0; i < len; i++) {
+      if (i === 0) { tr.push(bars[0].h - bars[0].l); pdm.push(0); mdm.push(0); continue; }
+      const pc = bars[i - 1].c;
+      tr.push(Math.max(bars[i].h - bars[i].l, Math.abs(bars[i].h - pc), Math.abs(bars[i].l - pc)));
+      const hd = bars[i].h - bars[i - 1].h, ld = bars[i - 1].l - bars[i].l;
+      pdm.push((hd > ld && hd > 0) ? hd : 0);
+      mdm.push((ld > hd && ld > 0) ? ld : 0);
+    }
+    let atr = 0, ap = 0, am = 0;
+    for (let i = 0; i < len; i++) {
+      if (i < n) {
+        atr += tr[i]; ap += pdm[i]; am += mdm[i];
+      } else {
+        atr = atr - atr / n + tr[i];
+        ap = ap - ap / n + pdm[i];
+        am = am - am / n + mdm[i];
+      }
+      if (i >= n - 1 && atr > 0) {
+        pdi[i] = 100 * ap / atr;
+        mdi[i] = 100 * am / atr;
+      }
+    }
+    const dx = new Array(len).fill(null);
+    for (let i = 0; i < len; i++) {
+      if (pdi[i] === null) continue;
+      const s = pdi[i] + mdi[i];
+      dx[i] = s ? 100 * Math.abs(pdi[i] - mdi[i]) / s : 0;
+    }
+    let av = 0, cnt = 0;
+    for (let i = 0; i < len; i++) {
+      if (dx[i] === null) continue;
+      cnt++;
+      if (cnt <= adxN) { av += dx[i]; if (cnt === adxN) adx[i] = av / adxN; }
+      else { av = (av * (adxN - 1) + dx[i]) / adxN; adx[i] = av; }
+    }
+    for (let i = 0; i < len; i++) {
+      if (adx[i] !== null && i - adxN >= 0 && adx[i - adxN] !== null)
+        adxr[i] = (adx[i] + adx[i - adxN]) / 2;
+    }
+    return { pdi, mdi, adx, adxr };
+  },
+  /* 抛物线转向 SAR（Wilder）。返回 { values, trend }：
+     values[i] = 该根的 SAR 值；trend[i] = 该根的多空状态（true=多头，SAR 在价格下方）
+     绘制时多头标红点、空头标绿点，与国内主流期货软件口径一致。 */
+  sar(bars, af0 = 0.02, step = 0.02, maxAf = 0.2) {
+    const n = bars.length;
+    const out = new Array(n).fill(null);
+    const trend = new Array(n).fill(null);
+    if (n < 2) return { values: out, trend };
+    let up = bars[1].c >= bars[0].c;
+    let af = af0;
+    let ep = up ? Math.max(bars[0].h, bars[1].h) : Math.min(bars[0].l, bars[1].l);
+    let v = up ? Math.min(bars[0].l, bars[1].l) : Math.max(bars[0].h, bars[1].h);
+    out[1] = v;
+    trend[1] = up;
+    for (let i = 2; i < n; i++) {
+      v = v + af * (ep - v);
+      if (up) {
+        v = Math.min(v, bars[i - 1].l, bars[i - 2].l);
+        if (bars[i].l < v) { up = false; v = ep; ep = bars[i].l; af = af0; }
+        else if (bars[i].h > ep) { ep = bars[i].h; af = Math.min(af + step, maxAf); }
+      } else {
+        v = Math.max(v, bars[i - 1].h, bars[i - 2].h);
+        if (bars[i].h > v) { up = true; v = ep; ep = bars[i].h; af = af0; }
+        else if (bars[i].l < ep) { ep = bars[i].l; af = Math.min(af + step, maxAf); }
+      }
+      out[i] = v;
+      trend[i] = up;
+    }
+    return { values: out, trend };
+  },
+  /* 多空布林线 BBIBOLL：BBI=(MA3+MA6+MA12+MA24)/4，上下轨 = BBI ± 3σ(BBI,11) */
+  bbiboll(closes, n = 11, k = 3) {
+    const len = closes.length;
+    const m3 = TA.sma(closes, 3), m6 = TA.sma(closes, 6);
+    const m12 = TA.sma(closes, 12), m24 = TA.sma(closes, 24);
+    const bbi = closes.map((_, i) =>
+      (m3[i] === null || m6[i] === null || m12[i] === null || m24[i] === null)
+        ? null : (m3[i] + m6[i] + m12[i] + m24[i]) / 4);
+    const up = new Array(len).fill(null), dn = new Array(len).fill(null);
+    for (let i = 0; i < len; i++) {
+      if (bbi[i] === null) continue;
+      const s = i - n + 1;
+      if (s < 0 || bbi[s] === null) continue;
+      let sum = 0;
+      for (let j = s; j <= i; j++) sum += bbi[j];
+      const mean = sum / n;
+      let acc = 0;
+      for (let j = s; j <= i; j++) acc += (bbi[j] - mean) ** 2;
+      const sd = Math.sqrt(acc / n);
+      up[i] = bbi[i] + k * sd;
+      dn[i] = bbi[i] - k * sd;
+    }
+    return { bbi, up, dn };
+  }
+};
+
+/* ============================ 周/月/年 K 合成 ============================ */
+function weekKey(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d.getTime())) return dateStr;
+  const off = (d.getDay() + 6) % 7;          // 周一 = 0
+  d.setDate(d.getDate() - off);
+  return fmtDate(d);
+}
+function groupBars(bars, keyFn) {
+  const out = [];
+  let cur = null, curKey = null;
+  for (const b of bars) {
+    const k = keyFn(b);                       // keyFn 接收整根 bar
+    if (k !== curKey) {
+      if (cur) out.push(cur);
+      cur = { t: b.t, o: b.o, h: b.h, l: b.l, c: b.c, v: b.v, oi: b.oi, cnt: 1, key: k };
+      curKey = k;
+    } else {
+      if (b.h > cur.h) cur.h = b.h;
+      if (b.l < cur.l) cur.l = b.l;
+      cur.c = b.c;
+      cur.v += b.v;
+      cur.oi = b.oi;                          // 持仓量取区间末值
+      cur.cnt++;
+    }
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+function synth(bars, period) {
+  if (!bars || !bars.length) return [];
+  if (period === 'week') return groupBars(bars, b => weekKey(b.t));
+  if (period === 'month') return groupBars(bars, b => String(b.t).slice(0, 7));
+  if (period === 'year') return groupBars(bars, b => String(b.t).slice(0, 4));
+  return bars;
+}
+
+/* ================================ 主题色 ================================ */
+function palette() {
+  const dark = document.documentElement.dataset.theme !== 'light';
+  return dark ? {
+    bg: '#0d1117', panel: '#131920', grid: '#1d242e', grid2: '#2a333f',
+    text: '#dfe6ee', dim: '#7d8896', weak: '#566273',
+    up: '#ef4b4b', down: '#12b886', flat: '#8b949e',
+    ma5: '#f0b90b', ma10: '#4dabf7', ma20: '#d16bd6', ma60: '#4dd4ac',
+    line: '#e6edf3', avg: '#f0b90b', oi: '#e5a50a',
+    k: '#f0b90b', d: '#4dabf7', j: '#e056a0',
+    dif: '#f0b90b', dea: '#4dabf7',
+    r1: '#f0b90b', r2: '#4dabf7', r3: '#e056a0',
+    bollU: '#e056a0', bollM: '#f0b90b', bollL: '#4dabf7', sar: '#22d3ee',
+    wr: '#f0b90b', pdi: '#ef4b4b', mdi: '#12b886', adx: '#f0b90b', adxr: '#4dabf7',
+    cross: '#8b949e', tipBg: 'rgba(28,36,48,.96)', tipBorder: '#39424f', tipText: '#e6edf3'
+  } : {
+    bg: '#eef1f5', panel: '#ffffff', grid: '#eef1f5', grid2: '#dde3ea',
+    text: '#1f2328', dim: '#6b7684', weak: '#98a2b0',
+    up: '#e03131', down: '#0ca678', flat: '#8b949e',
+    ma5: '#d97706', ma10: '#2563eb', ma20: '#9333ea', ma60: '#0d9488',
+    line: '#1f2328', avg: '#d97706', oi: '#b45309',
+    k: '#d97706', d: '#2563eb', j: '#c026d3',
+    dif: '#d97706', dea: '#2563eb',
+    r1: '#d97706', r2: '#2563eb', r3: '#c026d3',
+    bollU: '#c026d3', bollM: '#d97706', bollL: '#2563eb', sar: '#0891b2',
+    wr: '#d97706', pdi: '#e03131', mdi: '#0ca678', adx: '#d97706', adxr: '#2563eb',
+    cross: '#6b7684', tipBg: 'rgba(255,255,255,.97)', tipBorder: '#cdd4dd', tipText: '#1f2328'
+  };
+}
+
+/* ============================== 全局状态 ============================== */
+const state = {
+  symbol: tryLS('sa.symbol') || DEFAULT_SYMBOL,
+  period: tryLS('sa.period') || 'timeshare',
+  ind: tryLS('sa.ind') || 'MACD',            // 副图二指标
+  mainInd: tryLS('sa.mainInd') || 'MA',      // 主图叠加指标
+  theme: tryLS('sa.theme') || 'dark',
+  weightMode: tryLS('sa.weightMode') || 'oi', // 加权口径：oi / vol / tianqin
+  tqOk: false,           // 天勤（快期）是否可用（已安装 + 已配置账号）
+  tqErr: '',             // 天勤最近一次错误，用于按钮提示
+  bars: [],              // 当前 K 线（已合成）
+  rawDaily: [],          // 日K 原始（合成用）
+  timeshare: null,
+  quote: null,
+  symbols: null,
+  products: null,        // 全品种树（按交易所分组）
+  viewStart: 0,          // 可视起始索引
+  viewCount: 0,          // 可视根数
+  autoView: true,        // 是否自动跟随最新
+  hover: null,           // {x, y, idx, zone}
+  loading: false,
+  lastDataAt: 0,
+};
+
+/* ============================== DOM / 尺寸 ============================== */
+const cvMain = $('chart'), cvOver = $('overlay');
+let ctx = cvMain.getContext('2d');
+let octx = cvOver.getContext('2d');
+let W = 0, H = 0, DPR = 1;
+
+const PAD = { left: 6, right: 76, top: 10, bottom: 6 };
+const GAP = 7;
+const TIME_H = 22;
+
+function layout() {
+  const plotW = W - PAD.left - PAD.right;
+  const bodyTop = PAD.top;
+  const bodyBot = H - PAD.bottom;
+  const stackH = bodyBot - bodyTop - TIME_H - GAP * 2;
+  const hMain = Math.round(stackH * 0.52);
+  const hSub1 = Math.round(stackH * 0.16);
+  const hSub2 = stackH - hMain - hSub1;
+  const main = { x: PAD.left, y: bodyTop, w: plotW, h: hMain };
+  const sub1 = { x: PAD.left, y: main.y + main.h + GAP, w: plotW, h: hSub1 };
+  const sub2 = { x: PAD.left, y: sub1.y + sub1.h + GAP, w: plotW, h: hSub2 };
+  const time = { x: PAD.left, y: bodyBot - TIME_H, w: plotW, h: TIME_H };
+  return { main, sub1, sub2, time, plotW };
+}
+
+function fitCanvas() {
+  DPR = window.devicePixelRatio || 1;
+  const wrap = cvMain.parentElement.getBoundingClientRect();
+  W = Math.max(120, Math.floor(wrap.width));
+  H = Math.max(160, Math.floor(wrap.height));
+  for (const cv of [cvMain, cvOver]) {
+    cv.width = Math.round(W * DPR);
+    cv.height = Math.round(H * DPR);
+    cv.style.width = W + 'px';
+    cv.style.height = H + 'px';
+  }
+  ctx = cvMain.getContext('2d');
+  octx = cvOver.getContext('2d');
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  octx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+
+/* ============================== 绘图基础 ============================== */
+function text(s, x, y, opt) {
+  opt = opt || {};
+  ctx.font = (opt.font || '11px Consolas, "Microsoft YaHei", monospace');
+  ctx.fillStyle = opt.color || C.text;
+  ctx.textAlign = opt.align || 'left';
+  ctx.textBaseline = opt.baseline || 'alphabetic';
+  ctx.fillText(s, x, y);
+}
+function box(x, y, w, h, fill, stroke) {
+  if (fill) { ctx.fillStyle = fill; ctx.fillRect(x, y, w, h); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.strokeRect(x + .5, y + .5, w - 1, h - 1); }
+}
+function hLine(x1, x2, y, color, dash) {
+  ctx.save();
+  ctx.strokeStyle = color; ctx.lineWidth = 1;
+  if (dash) ctx.setLineDash(dash);
+  ctx.beginPath(); ctx.moveTo(x1, y + .5); ctx.lineTo(x2, y + .5); ctx.stroke();
+  ctx.restore();
+}
+function vLine(x, y1, y2, color, dash) {
+  ctx.save();
+  ctx.strokeStyle = color; ctx.lineWidth = 1;
+  if (dash) ctx.setLineDash(dash);
+  ctx.beginPath(); ctx.moveTo(x + .5, y1); ctx.lineTo(x + .5, y2); ctx.stroke();
+  ctx.restore();
+}
+function polyline(pts, color, width) {
+  ctx.save();
+  ctx.strokeStyle = color; ctx.lineWidth = width || 1;
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ctx.beginPath();
+  let started = false;
+  for (const p of pts) {
+    if (p === null) { started = false; continue; }
+    if (!started) { ctx.moveTo(p[0], p[1]); started = true; }
+    else ctx.lineTo(p[0], p[1]);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+let C = palette();
+
+/* ============================== 数据请求 ============================== */
+async function api(path, params) {
+  const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+  const res = await fetch(path + qs, { cache: 'no-store' });
+  const json = await res.json();
+  if (!json.ok) throw new Error(json.error || '接口错误');
+  return json.data;
+}
+
+/* ============================== 指标缓存 ============================== */
+let indCache = null;   // 依赖 bars，bars 变化时重建
+
+function buildIndicators() {
+  const bars = state.bars;
+  if (!bars.length) { indCache = null; return; }
+  const closes = bars.map(b => b.c);
+  indCache = {
+    ma5: TA.sma(closes, 5), ma10: TA.sma(closes, 10),
+    ma20: TA.sma(closes, 20), ma60: TA.sma(closes, 60),
+    expma5: TA.ema(closes, 5), expma10: TA.ema(closes, 10),
+    expma20: TA.ema(closes, 20), expma60: TA.ema(closes, 60),
+    sar: TA.sar(bars),
+    bbiboll: TA.bbiboll(closes, 11, 3),
+    macd: TA.macd(closes),
+    kdj: TA.kdj(bars),
+    rsi6: TA.rsi(closes, 6), rsi12: TA.rsi(closes, 12), rsi24: TA.rsi(closes, 24),
+    boll: TA.boll(closes, 20, 2),
+    wr: TA.wr(bars, 14),
+    dmi: TA.dmi(bars, 14, 6)
+  };
+}
+
+/* ============================== 可视区间 ============================== */
+function visibleRange() {
+  const n = state.period === 'timeshare'
+    ? (state.timeshare ? state.timeshare.points.length : 0)
+    : state.bars.length;
+  if (n <= 0) return { start: 0, end: 0, count: 0 };
+  const minCount = Math.min(10, n);            // 数据不足 10 根时下限跟随总量
+  let count = state.viewCount || n;
+  count = clamp(Math.round(count), minCount, n);
+  let start = state.autoView ? Math.max(0, n - count) : clamp(state.viewStart, 0, n - count);
+  return { start, end: start + count, count };
+}
+
+function initView() {
+  const n = state.period === 'timeshare'
+    ? (state.timeshare ? state.timeshare.points.length : 0)
+    : state.bars.length;
+  state.autoView = true;
+  state.viewCount = n;
+  state.viewStart = 0;
+}
+
+function setPeriodView(period) {
+  const n = state.period === 'timeshare' ? 0 : state.bars.length;
+  if (period === 'timeshare') { state.viewCount = 0; state.autoView = true; return; }
+  // 默认展示全量：所有周期都从"最新一根"起完整显示，用户可滚轮/拖动自行缩放。
+  // （此前日/周/月/年默认只给 120 根，看起来像"数据没显示全"。）
+  state.viewCount = n || 1;
+  state.autoView = true;
+}
+
+/* ============================== 主绘制 ============================== */
+function draw() {
+  C = palette();
+  PAD.right = state.period === 'timeshare' ? 110 : 76;   // 分时右侧要同时放下价格+百分比
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = C.panel;
+  ctx.fillRect(0, 0, W, H);
+
+  const L = layout();
+  if (state.period === 'timeshare') {
+    drawTimeshare(L);
+  } else {
+    drawKline(L);
+  }
+  positionSubIndBar(L);
+  drawOverlayCursor();
+}
+
+/* 把副图二的指标切换按钮对齐到副图二顶部 */
+function positionSubIndBar(L) {
+  const bar = document.getElementById('subIndBar');
+  if (!bar || !L) return;
+  bar.style.top = Math.max(0, Math.round(L.sub2.y) + 1) + 'px';
+}
+
+/* ------------------------------ 网格与轴 ------------------------------ */
+function priceAxis(rect, min, max, fmt, ticks) {
+  const n = ticks || 5;
+  ctx.save();
+  const lines = [];
+  for (let i = 0; i <= n; i++) {
+    const y = rect.y + rect.h * (i / n);
+    const val = max - (max - min) * (i / n);
+    hLine(rect.x, rect.x + rect.w, y, i === 0 || i === n ? C.grid2 : C.grid);
+    text(fmt(val), rect.x + rect.w + 6, y + 3, { color: C.dim });
+    lines.push({ y, val });
+  }
+  ctx.restore();
+  return lines;
+}
+
+/* ------------------------------ 分时图 ------------------------------ */
+/* 横轴：把整个交易时段摊满全宽，行情走到哪画到哪（与新浪财经一致），
+         不会再因为刚开盘只有几十个点就把曲线拉伸铺满整幅图。
+   纵轴：以昨结算为中心、取"整数百分比档位"上下对称，刻度天然对齐。 */
+
+const PCT_STEPS = [0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10, 12, 15, 20];
+const AXIS_FONT = '11px Consolas, "Microsoft YaHei", monospace';
+
+/* "HH:MM" → 交易日内序号：夜盘(21:00 起) 排在日盘(09:00 起) 之前 */
+function minuteKey(hhmm) {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(hhmm == null ? '' : hhmm));
+  if (!m) return -1;
+  const t = (+m[1]) * 60 + (+m[2]);
+  return t >= 1200 ? t - 1200 : t + 240;
+}
+
+function priceDigits(v) {
+  const a = Math.abs(v || 0);
+  if (a >= 1000) return 0;
+  if (a >= 10) return 1;
+  return 3;
+}
+
+/* 纵轴档位：上下对称，主刻度恰好落在 ±P、±P/2、0 这些整档百分比上 */
+function niceTimeshareRange(pre, hi, lo) {
+  const base = pre || hi || lo || 1;
+  const devPct = Math.max(hi - base, base - lo, 0) / base * 100;
+  let pct = PCT_STEPS[PCT_STEPS.length - 1];
+  for (const s of PCT_STEPS) { if (s >= devPct) { pct = s; break; } }
+  return { top: base * (1 + pct / 100), bot: base * (1 - pct / 100), pct, base };
+}
+
+/* 分时坐标轴：完整时段 + 每个数据点落在第几个槽（按合约缓存，点数变化时重建） */
+let tsAxis = null;
+function tsAxisData() {
+  const ts = state.timeshare;
+  if (!ts || !ts.points || !ts.points.length) return null;
+  const slotsLen = (ts.slots && ts.slots.length) ? ts.slots.length : 0;
+  if (tsAxis && tsAxis.sym === state.symbol && tsAxis.n === ts.points.length
+      && tsAxis.slotsLen === slotsLen) return tsAxis;
+
+  const seen = Object.create(null);
+  const slots = [];
+  const push = t => { if (!seen[t]) { seen[t] = 1; slots.push(t); } };
+  if (ts.slots && ts.slots.length) for (const t of ts.slots) push(t);
+  for (const p of ts.points) push(p.t);            // 兜底：数据点自身的时间必然在轴上
+  slots.sort((a, b) => minuteKey(a) - minuteKey(b));
+
+  const pos = Object.create(null);
+  for (let i = 0; i < slots.length; i++) pos[slots[i]] = i;
+  const slotOf = ts.points.map(p => pos[p.t]);
+  for (let i = 1; i < slotOf.length; i++) {        // 防御：槽位必须严格递增
+    if (!(slotOf[i] > slotOf[i - 1])) slotOf[i] = slotOf[i - 1] + 1;
+  }
+  const bounds = [];                               // 小节分界（夜盘 / 上午 / 下午）
+  for (let i = 1; i < slots.length; i++) {
+    if (minuteKey(slots[i]) - minuteKey(slots[i - 1]) !== 1) bounds.push(i);
+  }
+  tsAxis = {
+    sym: state.symbol, n: ts.points.length, slotsLen, slots, slotOf, bounds,
+    last: slotOf.length ? slotOf[slotOf.length - 1] : 0,
+  };
+  return tsAxis;
+}
+
+/* 屏幕上离某槽位最近的数据点（slotOf 单调不减 → 线性扫描即可） */
+function nearestBySlot(slotOf, slot) {
+  let best = 0, bestD = Infinity;
+  for (let i = 0; i < slotOf.length; i++) {
+    const d = Math.abs(slotOf[i] - slot);
+    if (d < bestD) { bestD = d; best = i; }
+    if (slotOf[i] > slot && d > bestD) break;
+  }
+  return best;
+}
+
+function drawTimeshare(L) {
+  const ts = state.timeshare;
+  const pts = ts ? ts.points : [];
+  const rect = L.main;
+
+  if (!pts.length) {
+    text('暂无分时数据', rect.x + rect.w / 2, rect.y + rect.h / 2, { color: C.dim, align: 'center' });
+    drawSubEmpty(L.sub1, '成交量 / 持仓量');
+    drawSubEmpty(L.sub2, '副图二');
+    return;
+  }
+
+  const n = pts.length;
+  const ax = tsAxisData();
+  const slots = ax.slots;
+  const bw = rect.w / slots.length;                // 一格 = 一分钟
+  const Xs = s => rect.x + (clamp(s, 0, slots.length - 1) + 0.5) * bw;
+  const X = k => Xs(ax.slotOf[k]);                 // 数据点 → x
+
+  const pre = ts.preClose || pts[0].c;
+  let hi = -Infinity, lo = Infinity;
+  for (const p of pts) { hi = Math.max(hi, p.c, p.avg || p.c); lo = Math.min(lo, p.c, p.avg || p.c); }
+  const rng = niceTimeshareRange(pre, hi, lo);
+  const top = rng.top, bot = rng.bot;
+  const Y = v => rect.y + rect.h * (1 - (v - bot) / (top - bot || 1));
+
+  /* 纵向网格：与时间刻度对齐，贯穿主图与两个副图 */
+  const isBound = Object.create(null);
+  for (const b of ax.bounds) isBound[b] = 1;
+  const paintVG = (x, strong) => {
+    ctx.save();
+    ctx.strokeStyle = strong ? C.grid2 : C.grid;
+    ctx.globalAlpha = strong ? 0.85 : 0.5;
+    if (strong) ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(x + .5, rect.y);
+    ctx.lineTo(x + .5, L.sub2.y + L.sub2.h);
+    ctx.stroke();
+    ctx.restore();
+  };
+  const gstep = Math.max(1, Math.round(slots.length / Math.max(1, Math.round(rect.w / 76))));
+  for (let s = 0; s < slots.length; s += gstep) {
+    if (!isBound[s]) paintVG(Xs(s), false);
+  }
+  for (const b of ax.bounds) paintVG(Xs(b), true);
+
+  /* 背景分区（上半涨色 / 下半跌色，极淡） */
+  ctx.save();
+  ctx.globalAlpha = 0.05;
+  ctx.fillStyle = C.up;   ctx.fillRect(rect.x, rect.y, rect.w, rect.h / 2);
+  ctx.fillStyle = C.down; ctx.fillRect(rect.x, rect.y + rect.h / 2, rect.w, rect.h / 2);
+  ctx.restore();
+
+  /* 价格轴：左列价格 / 右列涨跌幅，5 等分 */
+  const dg = priceDigits(Math.max(Math.abs(top), Math.abs(bot)));
+  for (let i = 0; i <= 4; i++) {
+    const y = rect.y + rect.h * (i / 4);
+    const v = top - (top - bot) * (i / 4);
+    const p = rng.pct * (1 - i / 2);
+    hLine(rect.x, rect.x + rect.w, y, i === 0 || i === 4 ? C.grid2 : C.grid);
+    text(px2(v, dg), rect.x + rect.w + 6, y + 3, { color: C.dim });
+    text((p > 0 ? '+' : '') + p.toFixed(2) + '%', rect.x + rect.w + 62, y + 3,
+      { color: p > 0 ? C.up : (p < 0 ? C.down : C.dim) });
+  }
+
+  /* 昨结算基准线 */
+  hLine(rect.x, rect.x + rect.w, Y(pre), C.dim, [3, 3]);
+
+  /* 价格线 + 渐变填充（淡填充，避免盖住文字与均线） */
+  const grad = ctx.createLinearGradient(0, rect.y, 0, rect.y + rect.h);
+  const lineColor = pts[n - 1].c >= pre ? C.up : C.down;
+  grad.addColorStop(0, lineColor + '26');
+  grad.addColorStop(1, lineColor + '03');
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(X(0), rect.y + rect.h);
+  for (let k = 0; k < n; k++) ctx.lineTo(X(k), Y(pts[k].c));
+  ctx.lineTo(X(n - 1), rect.y + rect.h);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.restore();
+
+  polyline(pts.map((p, k) => [X(k), Y(p.c)]), lineColor, 1.3);
+  polyline(pts.map((p, k) => p.avg ? [X(k), Y(p.avg)] : null), C.avg, 1.1);
+
+  /* 最新价圆点 + 右侧价格标签 */
+  const lastP = pts[n - 1];
+  ctx.save();
+  ctx.fillStyle = lineColor;
+  ctx.beginPath();
+  ctx.arc(X(n - 1), Y(lastP.c), 2.6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  priceTag(rect, Y(lastP.c), px2(lastP.c), lineColor);
+
+  /* 图例（带半透明底板，避免与曲线/填充混叠） */
+  const rise = lastP.c - pre, pctv = pre ? rise / pre * 100 : 0;
+  const cc = rise > 0 ? C.up : (rise < 0 ? C.down : C.flat);
+  ctx.save();
+  ctx.globalAlpha = 0.78;
+  ctx.fillStyle = C.panel;
+  ctx.fillRect(rect.x + 2, rect.y + 2, 236, 78);
+  ctx.restore();
+  text(ts.day + '  分时', rect.x + 8, rect.y + 15, { color: C.dim });
+  text(px2(lastP.c), rect.x + 8, rect.y + 34, { color: cc, font: 'bold 14px Consolas, monospace' });
+  text((rise >= 0 ? '+' : '') + px2(rise) + '  ' + (rise >= 0 ? '+' : '') + pctv.toFixed(2) + '%',
+    rect.x + 8 + ctx.measureText(px2(lastP.c)).width + 46, rect.y + 34, { color: cc, font: 'bold 12px Consolas, monospace' });
+  text('均价 ' + px2(lastP.avg || lastP.c), rect.x + 8, rect.y + 52, { color: C.avg });
+  text('昨收 ' + px2(pre), rect.x + 8, rect.y + 68, { color: C.dim });
+
+  /* 时间刻度 */
+  timeAxisTimeshare(L.time, ax);
+
+  /* 副图一 */
+  drawSub1(L.sub1, pts.map(p => ({ v: p.v, oi: p.oi, up: p.c >= (p.avg || p.c) })),
+    pts.map((p, k) => [X(k), p]), 0, 0, { X, bw });
+
+  /* 副图二（分时模式下使用合成的每分钟K，指标同样可用） */
+  drawSub2(L.sub2, state.bars, 0, n, X, bw);
+}
+
+/* 分时时间轴：整段时间摊满全宽，标签按"小节分界 + 最新时间 + 均匀补点"排布 */
+function timeAxisTimeshare(timeRect, ax) {
+  const slots = ax.slots;
+  const n = slots.length;
+  const y = timeRect.y + 14;
+  const bw = timeRect.w / n;
+  const Xs = s => timeRect.x + (clamp(s, 0, n - 1) + 0.5) * bw;
+  hLine(timeRect.x, timeRect.x + timeRect.w, timeRect.y + 1, C.grid2);
+  if (!n) return;
+
+  ctx.save();
+  const kept = [];
+  const put = (s, color, tick) => {
+    if (s < 0 || s >= n) return false;
+    ctx.font = AXIS_FONT;
+    const w = ctx.measureText(slots[s]).width;
+    let left = Xs(s) - w / 2;
+    if (s === 0) left = Xs(0) - 1;
+    if (s === n - 1) left = Xs(n - 1) - w + 1;
+    const b = { left, right: left + w };
+    if (b.left < timeRect.x - 1 || b.right > timeRect.x + timeRect.w + 1) return false;
+    for (const k of kept) if (b.left < k.right + 8 && b.right > k.left - 8) return false;
+    if (tick) vLine(Xs(s), timeRect.y + 1, timeRect.y + 6, C.grid2);
+    text(slots[s], left, y, { color: color || C.dim });
+    kept.push(b);
+    return true;
+  };
+
+  /* 1) 必显：最新时间、小节分界  2) 其余按均匀间隔补齐，放不下就丢弃 */
+  put(ax.last, C.text, true);
+  for (const b of ax.bounds) put(b, C.dim, true);
+  const want = Math.max(2, Math.round(timeRect.w / 76));
+  const step = Math.max(1, Math.round(n / want));
+  for (let s = 0; s < n; s += step) put(s, C.dim, true);
+  put(0, C.dim, true);
+  put(n - 1, C.dim, true);
+
+  /* 底部小节分隔线（与主图虚线对齐） */
+  for (const b of ax.bounds) {
+    ctx.save();
+    ctx.strokeStyle = C.grid2; ctx.setLineDash([2, 3]);
+    ctx.beginPath();
+    ctx.moveTo(Xs(b) - bw / 2 + .5, timeRect.y + 1);
+    ctx.lineTo(Xs(b) - bw / 2 + .5, timeRect.y + 6);
+    ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+/* --------------------- 主图叠加指标（MA/SAR/BOLL/EXPMA/BBIBOLL） --------------------- */
+function mainOverlaySeries() {
+  if (!indCache) return [];
+  switch (state.mainInd) {
+    case 'EXPMA':
+      return [
+        { arr: indCache.expma5, color: C.ma5, name: 'EXPMA5' },
+        { arr: indCache.expma10, color: C.ma10, name: 'EXPMA10' },
+        { arr: indCache.expma20, color: C.ma20, name: 'EXPMA20' },
+        { arr: indCache.expma60, color: C.ma60, name: 'EXPMA60' }];
+    case 'BOLL':
+      return [
+        { arr: indCache.boll.up, color: C.bollU, name: 'UP' },
+        { arr: indCache.boll.mid, color: C.bollM, name: 'MB' },
+        { arr: indCache.boll.dn, color: C.bollL, name: 'LB' }];
+    case 'BBIBOLL':
+      return [
+        { arr: indCache.bbiboll.up, color: C.bollU, name: 'UPR' },
+        { arr: indCache.bbiboll.bbi, color: C.bollM, name: 'BBI' },
+        { arr: indCache.bbiboll.dn, color: C.bollL, name: 'DWN' }];
+    case 'SAR':
+      return [{ arr: indCache.sar.values, trend: indCache.sar.trend, color: C.sar, name: 'SAR', dots: true }];
+    default:                                    // MA
+      return [
+        { arr: indCache.ma5, color: C.ma5, name: 'MA5' },
+        { arr: indCache.ma10, color: C.ma10, name: 'MA10' },
+        { arr: indCache.ma20, color: C.ma20, name: 'MA20' },
+        { arr: indCache.ma60, color: C.ma60, name: 'MA60' }];
+  }
+}
+
+/* ------------------------------ K 线图 ------------------------------ */
+function drawKline(L) {
+  const bars = state.bars;
+  const rect = L.main;
+  if (!bars.length) {
+    text('暂无K线数据', rect.x + rect.w / 2, rect.y + rect.h / 2, { color: C.dim, align: 'center' });
+    drawSubEmpty(L.sub1, '成交量 / 持仓量');
+    drawSubEmpty(L.sub2, '副图二');
+    return;
+  }
+  const R = visibleRange();
+  const { start, end, count } = R;
+  const bw = rect.w / count;
+  const X = i => rect.x + (i - start + 0.5) * bw;
+
+  // 主图叠加指标
+  const overlays = mainOverlaySeries();
+
+  // 价格范围（含叠加指标）
+  let hi = -Infinity, lo = Infinity;
+  for (let i = start; i < end; i++) {
+    if (bars[i].h > hi) hi = bars[i].h;
+    if (bars[i].l < lo) lo = bars[i].l;
+  }
+  for (const s of overlays) {
+    for (let i = start; i < end; i++) {
+      const v = s.arr[i];
+      if (v === null || v === undefined || !isFinite(v)) continue;
+      if (v > hi) hi = v;
+      if (v < lo) lo = v;
+    }
+  }
+  if (!isFinite(hi) || !isFinite(lo)) { hi = 1; lo = 0; }
+  const pad = (hi - lo) * 0.08 || hi * 0.01 || 1;
+  const top = hi + pad, bot = lo - pad;
+  const Y = v => rect.y + rect.h * (1 - (v - bot) / (top - bot || 1));
+
+  priceAxis(rect, bot, top, v => px2(v, v < 10 ? 3 : 0), 5);
+  // 垂直网格（时间）
+  drawVerticalGrid(rect, bars, start, end, X);
+
+  // 带状填充（BOLL / BBIBOLL）
+  if ((state.mainInd === 'BOLL' || state.mainInd === 'BBIBOLL') && overlays.length === 3) {
+    const u = overlays[0].arr, d = overlays[2].arr;
+    ctx.save();
+    ctx.globalAlpha = 0.07;
+    ctx.fillStyle = overlays[0].color;
+    ctx.beginPath();
+    let started = false;
+    for (let i = start; i < end; i++) {
+      const v = u[i]; if (v == null || !isFinite(v)) continue;
+      const x = X(i);
+      if (!started) { ctx.moveTo(x, Y(v)); started = true; } else ctx.lineTo(x, Y(v));
+    }
+    for (let i = end - 1; i >= start; i--) {
+      const v = d[i]; if (v == null || !isFinite(v)) continue;
+      ctx.lineTo(X(i), Y(v));
+    }
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+
+  // K 线
+  const bodyW = Math.max(1, Math.floor(bw * 0.72));
+  const solid = bw < 4;
+  for (let i = start; i < end; i++) {
+    const b = bars[i];
+    const up = b.c >= b.o;
+    const col = up ? C.up : C.down;
+    const x = X(i);
+    const yO = Y(b.o), yC = Y(b.c), yH = Y(b.h), yL = Y(b.l);
+    ctx.save();
+    ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 1;
+    // 影线
+    ctx.beginPath();
+    ctx.moveTo(Math.round(x) + .5, yH);
+    ctx.lineTo(Math.round(x) + .5, yL);
+    ctx.stroke();
+    // 实体
+    const yo = Math.min(yO, yC), hgt = Math.max(1, Math.abs(yC - yO));
+    const x0 = Math.round(x - bodyW / 2);
+    if (solid || up) {
+      if (up && !solid) {
+        ctx.strokeRect(x0 + .5, yo + .5, Math.max(1, bodyW - 1), Math.max(1, hgt - 1));
+      } else {
+        ctx.fillRect(x0, yo, bodyW, hgt);
+      }
+    } else {
+      ctx.fillRect(x0, yo, bodyW, hgt);
+    }
+    ctx.restore();
+  }
+
+  // 主图叠加指标绘制
+  for (const s of overlays) {
+    if (s.dots) {                                  // SAR：散点（多头红 / 空头绿）
+      ctx.save();
+      for (let i = start; i < end; i++) {
+        const v = s.arr[i];
+        if (v == null || !isFinite(v)) continue;
+        const bull = s.trend ? s.trend[i] : (v <= bars[i].c);
+        ctx.fillStyle = bull ? C.up : C.down;
+        const cx = Math.round(X(i)), cy = Math.round(Y(v));
+        ctx.fillRect(cx - 1, cy - 1, 3, 3);
+      }
+      ctx.restore();
+    } else {
+      polyline(s.arr.slice(start, end).map((v, k) =>
+        (v === null || v === undefined || !isFinite(v)) ? null : [X(start + k), Y(v)]), s.color, 1.1);
+    }
+  }
+
+  // 最新价线与标签
+  const last = bars[bars.length - 1];
+  hLine(rect.x, rect.x + rect.w, Y(last.c), C.flat, [3, 3]);
+  priceTag(rect, Y(last.c), px2(last.c), last.c >= last.o ? C.up : C.down);
+
+  // 顶部图例（OHLC + MA）
+  drawLegend(rect, bars, start, end);
+
+  // 时间轴
+  timeAxisKline(L.time, bars, start, end, X, bw);
+
+  // 副图一 / 副图二
+  drawSub1(L.sub1, bars.slice(start, end), null, start, end);
+  drawSub2(L.sub2, bars, start, end, X);
+}
+
+function drawVerticalGrid(rect, bars, start, end, X) {
+  const count = end - start;
+  const n = Math.min(8, count);
+  for (let k = 0; k <= n; k++) {
+    const i = start + Math.round((count - 1) * k / n);
+    if (i < start || i >= end) continue;
+    vLine(X(i), rect.y, rect.y + rect.h, C.grid);
+  }
+}
+
+function timeAxisKline(timeRect, bars, start, end, X, bw) {
+  const y = timeRect.y + 14;
+  hLine(timeRect.x, timeRect.x + timeRect.w, timeRect.y + 1, C.grid2);
+  const count = end - start;
+  const n = Math.min(8, count);
+  let prevLabel = '';
+  for (let k = 0; k <= n; k++) {
+    const i = start + Math.round((count - 1) * k / n);
+    if (i < start || i >= end) continue;
+    let t = bars[i].t;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(t)) t = t.slice(5, 16);
+    if (t === prevLabel) continue;
+    prevLabel = t;
+    vLine(X(i), timeRect.y + 1, timeRect.y + 5, C.grid2);
+    text(t, X(i), y, { color: C.dim, align: k === 0 ? 'left' : (k === n ? 'right' : 'center') });
+  }
+}
+
+function drawLegend(rect, bars, start, end) {
+  const i = state.hover && state.hover.idx !== null && state.hover.zone !== null
+    ? state.hover.idx : bars.length - 1;
+  const b = bars[clamp(i, 0, bars.length - 1)];
+  if (!b) return;
+  // 半透明底板，避免图例与K线/均线混叠
+  ctx.save();
+  ctx.globalAlpha = 0.72;
+  ctx.fillStyle = C.panel;
+  ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, 44);
+  ctx.restore();
+  const up = b.c >= b.o;
+  const col = up ? C.up : C.down;
+  let x = rect.x + 8, y = rect.y + 15;
+  ctx.save();
+  const items = [
+    ['开', b.o, C.dim], ['高', b.h, C.dim], ['低', b.l, C.dim], ['收', b.c, col]
+  ];
+  for (const [k, v, c] of items) {
+    text(k, x, y, { color: C.weak });
+    x += ctx.measureText(k).width + 3;
+    text(px2(v), x, y, { color: c, font: '11px Consolas, monospace' });
+    x += ctx.measureText(px2(v)).width + 12;
+  }
+  const chg = b.c - b.o;
+  const pctv = b.o ? chg / b.o * 100 : 0;
+  const chgStr = '涨跌 ' + (chg >= 0 ? '+' : '') + px2(chg) + ' (' + (chg >= 0 ? '+' : '') + pctv.toFixed(2) + '%)';
+  text(chgStr, x, y, { color: chg >= 0 ? C.up : C.down });
+  x += ctx.measureText(chgStr).width + 12;
+  text('量 ' + fmtVol(b.v), x, y, { color: C.dim });
+  x += ctx.measureText('量 ' + fmtVol(b.v)).width + 12;
+  text('仓 ' + fmtVol(b.oi), x, y, { color: C.oi });
+
+  // 均线数值
+  // 主图指标数值（跟随当前主图指标）
+  if (indCache) {
+    const ovs = mainOverlaySeries();
+    let mx = rect.x + 8;
+    const my = rect.y + 32;
+    text(state.mainInd, mx, my, { color: C.text, font: 'bold 10px "Microsoft YaHei"' });
+    mx += ctx.measureText(state.mainInd).width + 8;
+    for (const s of ovs) {
+      const v = s.arr[i];
+      const str = s.name + ':' + (v === null || v === undefined || !isFinite(v) ? '--' : px2(v));
+      let col = s.color;
+      if (s.trend && v !== null && v !== undefined && isFinite(v)) {
+        const bull = s.trend[i];
+        col = bull ? C.up : C.down;                // SAR 图例跟随多空红绿
+      }
+      text(str, mx, my, { color: col, font: '11px Consolas, monospace' });
+      mx += ctx.measureText(str).width + 10;
+      if (s.trend && v !== null && v !== undefined && isFinite(v)) {
+        const st = s.trend[i] ? '多头' : '空头';
+        text(st, mx, my, { color: col, font: '10px "Microsoft YaHei"' });
+        mx += ctx.measureText(st).width + 10;
+      }
+    }
+  }
+  ctx.restore();
+}
+
+function priceTag(rect, y, label, color) {
+  const x = rect.x + rect.w;
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.fillRect(x + 1, y - 8, 56, 16);
+  text(label, x + 29, y + 4, { color: '#fff', align: 'center', font: 'bold 11px Consolas, monospace' });
+  ctx.restore();
+}
+
+function drawSubEmpty(rect, title) {
+  ctx.save();
+  ctx.strokeStyle = C.grid;
+  ctx.beginPath(); ctx.moveTo(rect.x + .5, rect.y + .5); ctx.lineTo(rect.x + rect.w, rect.y + .5); ctx.stroke();
+  ctx.restore();
+  text(title, rect.x + 8, rect.y + 15, { color: C.weak });
+}
+
+/* ------------------------------ 副图一：量 + 仓 ------------------------------ */
+function drawSub1(rect, data, tsPoints, start, end, opt) {
+  ctx.save();
+  ctx.strokeStyle = C.grid2;
+  ctx.beginPath(); ctx.moveTo(rect.x + .5, rect.y + .5); ctx.lineTo(rect.x + rect.w, rect.y + .5); ctx.stroke();
+  ctx.restore();
+
+  if (!data || !data.length) { drawSubEmpty(rect, '成交量 / 持仓量'); return; }
+
+  const isTS = !!tsPoints;
+  const n = data.length;
+  const count = isTS ? n : (end - start);
+  const X = (isTS && opt && opt.X)
+    ? opt.X                                        // 分时：按完整时段的槽位定位
+    : (isTS ? (i => rect.x + (i + 0.5) * (rect.w / count))
+            : (i => rect.x + (i - start + 0.5) * (rect.w / count)));
+  const bw = (isTS && opt && opt.bw) ? opt.bw : rect.w / count;
+
+  let vmax = 0, oimax = -Infinity, oimin = Infinity;
+  for (const d of data) {
+    vmax = Math.max(vmax, d.v || 0);
+    if (d.oi) { oimax = Math.max(oimax, d.oi); oimin = Math.min(oimin, d.oi); }
+  }
+  if (!vmax) vmax = 1;
+  if (!isFinite(oimax)) { oimax = 1; oimin = 0; }
+  const oiSpan = (oimax - oimin) || oimax * 0.02 || 1;
+  const oiLo = oimin - oiSpan * 0.25, oiHi = oimax + oiSpan * 0.25;
+
+  const bottom = rect.y + rect.h - 2;
+  const split = rect.y + rect.h * 0.54;            // 上半持仓线 / 下半量柱
+  const volH = bottom - split;
+  const YV = v => bottom - (v / vmax) * volH;
+  const oiTop = rect.y + 16;
+  const oiH = Math.max(4, split - 8 - oiTop);
+  const YO = v => oiTop + oiH * (1 - (v - oiLo) / (oiHi - oiLo));
+
+  // 成交量柱
+  for (let k = 0; k < n; k++) {
+    const d = data[k];
+    const i = isTS ? k : (start + k);
+    const col = d.up ? C.up : C.down;
+    ctx.save();
+    ctx.globalAlpha = 0.85;
+    ctx.fillStyle = col;
+    const x = Math.round(X(i) - bw * 0.36);
+    const w = Math.max(1, Math.floor(bw * 0.72));
+    const y = YV(d.v || 0);
+    ctx.fillRect(x, y, w, bottom - y);
+    ctx.restore();
+  }
+  // 分界线
+  ctx.save();
+  ctx.strokeStyle = C.grid; ctx.setLineDash([2, 3]);
+  ctx.beginPath(); ctx.moveTo(rect.x + .5, split + .5); ctx.lineTo(rect.x + rect.w, split + .5); ctx.stroke();
+  ctx.restore();
+  // 持仓量线
+  const pts = [];
+  for (let k = 0; k < n; k++) {
+    const d = data[k];
+    const i = isTS ? k : (start + k);
+    pts.push(d.oi ? [X(i), YO(d.oi)] : null);
+  }
+  polyline(pts, C.oi, 1.2);
+
+  text('成交量', rect.x + 6, rect.y + 13, { color: C.dim, font: '10px "Microsoft YaHei"' });
+  text('持仓量', rect.x + 52, rect.y + 13, { color: C.oi, font: '10px "Microsoft YaHei"' });
+  const hv = state.hover && state.hover.zone === 'sub1' && state.hover.idx !== null ? state.hover.idx : null;
+  const cur = hv !== null ? data[isTS ? hv : clamp(hv - start, 0, n - 1)] : data[n - 1];
+  if (cur) {
+    const s = fmtVol(cur.v) + '  ' + fmtVol(cur.oi);
+    text(s, rect.x + rect.w - 6, rect.y + 13, { color: C.dim, align: 'right', font: '10px Consolas, monospace' });
+  }
+  ctx.save();
+  ctx.strokeStyle = C.grid;
+  ctx.beginPath(); ctx.moveTo(rect.x + .5, rect.y + rect.h - .5); ctx.lineTo(rect.x + rect.w, rect.y + rect.h - .5); ctx.stroke();
+  ctx.restore();
+}
+
+/* ------------------------------ 副图二：指标 ------------------------------ */
+function sub2Series(bars, start, end) {
+  if (!indCache) return null;
+  const ind = state.ind;
+  const slice = arr => arr.slice(start, end);
+  switch (ind) {
+    case 'MACD':
+      return {
+        lines: [[slice(indCache.macd.dif), C.dif, 'DIF'], [slice(indCache.macd.dea), C.dea, 'DEA']],
+        bars: slice(indCache.macd.bar),
+        zero: true, refs: []
+      };
+    case 'KDJ':
+      return {
+        lines: [[slice(indCache.kdj.K), C.k, 'K'], [slice(indCache.kdj.D), C.d, 'D'], [slice(indCache.kdj.J), C.j, 'J']],
+        refs: [20, 80], range: [-20, 120]
+      };
+    case 'RSI':
+      return {
+        lines: [[slice(indCache.rsi6), C.r1, 'RSI6'], [slice(indCache.rsi12), C.r2, 'RSI12'], [slice(indCache.rsi24), C.r3, 'RSI24']],
+        refs: [30, 70], range: [0, 100]
+      };
+    case 'BOLL':
+      return {
+        lines: [[slice(indCache.boll.up), C.bollU, 'UP'],
+                [slice(indCache.boll.mid), C.bollM, 'MB'],
+                [slice(indCache.boll.dn), C.bollL, 'LB']],
+        refs: []
+      };
+    case 'WR':
+      return {
+        lines: [[slice(indCache.wr), C.wr, 'WR14']],
+        refs: [20, 80], range: [-5, 105]
+      };
+    case 'DMI':
+      return {
+        lines: [[slice(indCache.dmi.pdi), C.pdi, '+DI'], [slice(indCache.dmi.mdi), C.mdi, '-DI'],
+                [slice(indCache.dmi.adx), C.adx, 'ADX'], [slice(indCache.dmi.adxr), C.adxr, 'ADXR']],
+        refs: [20], range: [0, 100]
+      };
+  }
+  return null;
+}
+
+function drawSub2(rect, bars, start, end, X, bwOpt) {
+  const spec = sub2Series(bars, start, end);
+  if (!spec) { drawSubEmpty(rect, '副图二'); return; }
+
+  ctx.save();
+  ctx.strokeStyle = C.grid2;
+  ctx.beginPath(); ctx.moveTo(rect.x + .5, rect.y + .5); ctx.lineTo(rect.x + rect.w, rect.y + .5); ctx.stroke();
+  ctx.restore();
+
+  // 取值范围
+  let lo = Infinity, hi = -Infinity;
+  for (const [arr] of spec.lines) {
+    for (const v of arr) {
+      if (v === null || v === undefined || !isFinite(v)) continue;
+      lo = Math.min(lo, v); hi = Math.max(hi, v);
+    }
+  }
+  if (spec.bars) for (const v of spec.bars) { if (isFinite(v)) { lo = Math.min(lo, v); hi = Math.max(hi, v); } }
+  if (spec.range) { lo = Math.min(lo, spec.range[0]); hi = Math.max(hi, spec.range[1]); }
+  if (!isFinite(lo) || !isFinite(hi)) { lo = -1; hi = 1; }
+  if (hi - lo < 1e-9) { hi += 1; lo -= 1; }
+  const pd = (hi - lo) * 0.08;
+  lo -= pd; hi += pd;
+  const Y = v => rect.y + rect.h * (1 - (v - lo) / (hi - lo));
+
+  // 参考线
+  if (spec.refs) {
+    for (const r of spec.refs) {
+      if (r < lo || r > hi) continue;
+      hLine(rect.x, rect.x + rect.w, Y(r), C.grid, [2, 3]);
+      text(String(r), rect.x + rect.w + 6, Y(r) + 3, { color: C.weak, font: '10px Consolas, monospace' });
+    }
+  }
+  if (spec.zero && 0 > lo && 0 < hi) hLine(rect.x, rect.x + rect.w, Y(0), C.grid2);
+
+  // 柱状（MACD）
+  if (spec.bars) {
+    const count = end - start;
+    const bwv = bwOpt || rect.w / count;
+    for (let k = 0; k < spec.bars.length; k++) {
+      const v = spec.bars[k];
+      if (v === null || !isFinite(v)) continue;
+      ctx.fillStyle = v >= 0 ? C.up : C.down;
+      const y0 = Y(0), y1 = Y(v);
+      ctx.fillRect(Math.round(X(start + k) - bwv * 0.32), Math.min(y0, y1),
+        Math.max(1, Math.floor(bwv * 0.64)), Math.max(1, Math.abs(y1 - y0)));
+    }
+  }
+
+  // 曲线
+  for (const [arr, col] of spec.lines) {
+    polyline(arr.map((v, k) => (v === null || !isFinite(v)) ? null : [X(start + k), Y(v)]), col, 1.1);
+  }
+
+  // 右侧轴刻度
+  for (let i = 0; i <= 2; i++) {
+    const v = hi - (hi - lo) * (i / 2);
+    text(px2(v, 1), rect.x + rect.w + 6, rect.y + rect.h * (i / 2) + 3, { color: C.dim, font: '10px Consolas, monospace' });
+  }
+
+  // 图例（让开左上角的指标切换浮层）
+  const hiIdx = state.hover && state.hover.idx !== null
+    ? clamp(state.hover.idx - start, 0, spec.lines[0][0].length - 1)
+    : spec.lines[0][0].length - 1;
+  const barEl = document.getElementById('subIndBar');
+  const barW = barEl && barEl.offsetWidth ? barEl.offsetWidth : 262;
+  let lx = rect.x + 8 + barW;
+  const ly = rect.y + 14;
+  for (const [arr, col, name] of spec.lines) {
+    const v = arr[hiIdx];
+    const s = name + ':' + (v === null || v === undefined || !isFinite(v) ? '--' : px2(v, 2));
+    text(s, lx, ly, { color: col, font: '10px Consolas, monospace' });
+    lx += ctx.measureText(s).width + 10;
+  }
+  ctx.save();
+  ctx.strokeStyle = C.grid;
+  ctx.beginPath(); ctx.moveTo(rect.x + .5, rect.y + rect.h - .5); ctx.lineTo(rect.x + rect.w, rect.y + rect.h - .5); ctx.stroke();
+  ctx.restore();
+}
+
+/* ============================== 十字光标 ============================== */
+function drawOverlayCursor() {
+  octx.clearRect(0, 0, W, H);
+  const h = state.hover;
+  if (!h || h.x === null || !h.inside) return;
+
+  const L = layout();
+  const n = state.period === 'timeshare'
+    ? (state.timeshare ? state.timeshare.points.length : 0)
+    : state.bars.length;
+  if (!n) return;
+
+  const isoTS = state.period === 'timeshare';
+  let X, bw, idx;
+  if (isoTS) {
+    const ax = tsAxisData();
+    bw = L.main.w / ax.slots.length;
+    X = i => L.main.x + (clamp(ax.slotOf[i], 0, ax.slots.length - 1) + 0.5) * bw;
+    const slot = clamp(Math.floor((h.x - L.main.x) / bw), 0, ax.slots.length - 1);
+    idx = nearestBySlot(ax.slotOf, slot);         // 吸附到最近的实际成交点
+  } else {
+    const R = visibleRange();
+    bw = L.main.w / R.count;
+    X = i => L.main.x + (i - R.start + 0.5) * bw;
+    idx = clamp(Math.floor((h.x - L.main.x) / bw) + R.start, R.start, R.end - 1);
+  }
+  state.hover.idx = idx;
+
+  const cx = X(idx);
+  const zoom = (window.devicePixelRatio || 1);
+
+  octx.save();
+  octx.strokeStyle = C.cross;
+  octx.globalAlpha = 0.75;
+  octx.setLineDash([3, 3]);
+  octx.beginPath(); octx.moveTo(cx + .5, L.main.y); octx.lineTo(cx + .5, L.sub2.y + L.sub2.h); octx.stroke();
+  // 水平线落在当前分区
+  const zone = (h.y >= L.main.y && h.y <= L.main.y + L.main.h) ? 'main'
+    : (h.y >= L.sub1.y && h.y <= L.sub1.y + L.sub1.h) ? 'sub1' : 'sub2';
+  state.hover.zone = zone;
+  octx.beginPath(); octx.moveTo(L.main.x, h.y + .5); octx.lineTo(L.main.x + L.main.w, h.y + .5); octx.stroke();
+  octx.restore();
+
+  // 主图价格气泡
+  if (zone === 'main') {
+    const rect = L.main;
+    let top, bot;
+    if (isoTS) {
+      const ts = state.timeshare;
+      const pts = ts.points;
+      const pre = ts.preClose || pts[0].c;
+      let hi = -Infinity, lo = Infinity;
+      for (const p of pts) { hi = Math.max(hi, p.c, p.avg || p.c); lo = Math.min(lo, p.c, p.avg || p.c); }
+      const rng = niceTimeshareRange(pre, hi, lo);
+      top = rng.top; bot = rng.bot;
+    } else {
+      const bars = state.bars.slice(visibleRange().start, visibleRange().end);
+      let hi = -Infinity, lo = Infinity;
+      for (const b of bars) { hi = Math.max(hi, b.h); lo = Math.min(lo, b.l); }
+      const p = (hi - lo) * 0.08 || hi * 0.01 || 1;
+      top = hi + p; bot = lo - p;
+    }
+    const v = top - (h.y - rect.y) / rect.h * (top - bot);
+    const y = h.y;
+    octx.save();
+    octx.fillStyle = C.tipBg;
+    octx.strokeStyle = C.tipBorder;
+    const lbl = px2(v);
+    octx.font = 'bold 11px Consolas, monospace';
+    const tw = octx.measureText(lbl).width + 10;
+    const bx = rect.x + rect.w + 2, by = clamp(y - 8, 0, H - 16);
+    octx.fillRect(bx, by, tw, 16);
+    octx.strokeRect(bx + .5, by + .5, tw, 16);
+    octx.fillStyle = C.tipText;
+    octx.textAlign = 'left'; octx.textBaseline = 'middle';
+    octx.fillText(lbl, bx + 5, by + 8);
+    octx.restore();
+  }
+
+  // 顶部时间/数据气泡
+  const topInfo = collectHoverInfo(idx, isoTS);
+  if (topInfo) {
+    octx.save();
+    octx.font = '11px Consolas, "Microsoft YaHei", monospace';
+    const tw = octx.measureText(topInfo).width + 14;
+    const bx = clamp(cx - tw / 2, 2, W - tw - 2);
+    octx.fillStyle = C.tipBg;
+    octx.strokeStyle = C.tipBorder;
+    octx.fillRect(bx, 2, tw, 19);
+    octx.strokeRect(bx + .5, 2.5, tw, 18);
+    octx.fillStyle = C.tipText;
+    octx.textAlign = 'left'; octx.textBaseline = 'middle';
+    octx.fillText(topInfo, bx + 7, 12);
+    octx.restore();
+  }
+}
+
+function collectHoverInfo(idx, isoTS) {
+  if (isoTS) {
+    const ts = state.timeshare;
+    if (!ts || !ts.points[idx]) return '';
+    const p = ts.points[idx];
+    const pre = ts.preClose || p.c;
+    const chg = p.c - pre, pct = pre ? chg / pre * 100 : 0;
+    return p.t + '  ' + px2(p.c) + '  ' + (chg >= 0 ? '+' : '') + px2(chg)
+      + ' (' + (chg >= 0 ? '+' : '') + pct.toFixed(2) + '%)  均价 ' + px2(p.avg)
+      + '  量 ' + fmtVol(p.v) + '  仓 ' + fmtVol(p.oi);
+  }
+  const b = state.bars[idx];
+  if (!b) return '';
+  const prev = state.bars[idx - 1];
+  const pct = prev && prev.c ? (b.c - prev.c) / prev.c * 100 : 0;
+  const t = /^\d{4}-\d{2}-\d{2}$/.test(b.t) ? b.t : b.t;
+  return t + '  开' + px2(b.o) + ' 高' + px2(b.h) + ' 低' + px2(b.l) + ' 收' + px2(b.c)
+    + '  ' + (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%  量' + fmtVol(b.v) + ' 仓' + fmtVol(b.oi);
+}
+
+/* ============================== UI 更新 ============================== */
+function renderQuote() {
+  const q = state.quote;
+  if (!q) return;
+  const c = q.change > 0 ? 'up' : (q.change < 0 ? 'down' : 'flat');
+  $('hName').textContent = q.name;
+  $('hCode').textContent = q.code;
+  $('hExchange').textContent = q.exchange;
+
+  const lastEl = $('hLast');
+  lastEl.textContent = px2(q.last);
+  lastEl.className = 'last num ' + c;
+  const chgEl = $('hChg');
+  chgEl.textContent = (q.change >= 0 ? '+' : '') + px2(q.change)
+    + '   ' + (q.change >= 0 ? '+' : '') + q.pct.toFixed(2) + '%';
+  chgEl.className = 'chg num ' + c;
+
+  // 时间（新浪返回 HHMMSS）
+  const raw = String(q.time || '');
+  $('hTime').textContent = /^\d{6}$/.test(raw)
+    ? raw.slice(0, 2) + ':' + raw.slice(2, 4) + ':' + raw.slice(4, 6)
+    : (raw || '--:--:--');
+  $('hDate').textContent = q.date || '';
+
+  // 明细表 12 项
+  const vs = q.presettle || q.settle || 0;
+  const cmp = v => (vs && isFinite(v) ? (v > vs ? 'up' : (v < vs ? 'down' : 'flat')) : '');
+  const setV = (id, txt, cls2) => {
+    const el = $(id);
+    el.textContent = txt;
+    el.className = 'v num' + (cls2 ? ' ' + cls2 : '');
+  };
+  setV('sLast', px2(q.last), c);
+  setV('sOpen', px2(q.open), cmp(q.open));
+  setV('sHigh', px2(q.high), cmp(q.high));
+  setV('sLow', px2(q.low), cmp(q.low));
+  setV('sSettle', q.settle > 0 ? px2(q.settle) : '--', '');   // 夜盘中今结算尚未产生
+  setV('sPre', px2(q.presettle), '');
+  setV('sOI', fmtVol(q.oi), '');
+  setV('sVol', fmtVol(q.volume), '');
+  setV('sBid', px2(q.bid), cmp(q.bid));
+  setV('sAsk', px2(q.ask), cmp(q.ask));
+  setV('sBidVol', q.bidvol ? String(q.bidvol) : '--', '');
+  setV('sAskVol', q.askvol ? String(q.askvol) : '--', '');
+
+  document.title = q.name + ' ' + px2(q.last) + ' ' + (q.change >= 0 ? '+' : '') + q.pct.toFixed(2) + '%';
+}
+
+function renderSidebar() {
+  const s = state.symbols;
+  const list = $('symList');
+  if (!s) { list.innerHTML = ''; return; }
+  renderIdxSeg(s);
+  const html = s.items.map(it => {
+    const c = it.pct > 0 ? 'up' : (it.pct < 0 ? 'down' : 'flat');
+    const sel = it.code === state.symbol ? ' sel' : '';
+    // 加权指数行：单独样式 + Σ 标记，避免与真实合约混淆
+    if (it.isWeighted) {
+      const isTq = it.source === 'tianqin';
+      const wm = it.weightMode === 'vol' ? '量' : '仓';
+      const tq = isTq ? '天勤' : wm + '权';
+      const how = isTq
+        ? '天勤（快期）官方指数 KQ.i'
+        : '本品种全部在交易合约按' + (it.weightMode === 'vol' ? '成交量' : '持仓量') + '加权合成';
+      const n = (it.components && it.components.length) || it.members || 0;
+      return '<div class="sym weighted' + sel + '" data-code="' + it.code + '" '
+        + 'title="' + it.name + '：' + how + (n ? '（' + n + ' 个合约）' : '') + '">'
+        + '<span class="c">' + it.code + '<span class="tag wt">' + tq + '</span></span>'
+        + '<span class="p num ' + c + '">' + px2(it.last) + '</span>'
+        + '<span class="g num ' + c + '">' + (it.pct >= 0 ? '+' : '') + it.pct.toFixed(2) + '%</span>'
+        + '</div>';
+    }
+    return '<div class="sym' + sel + '" data-code="' + it.code + '">'
+      + '<span class="c">' + it.code + (it.isMain ? '<span class="tag">主</span>' : '') + '</span>'
+      + '<span class="p num ' + c + '">' + px2(it.last) + '</span>'
+      + '<span class="g num ' + c + '">' + (it.pct >= 0 ? '+' : '') + it.pct.toFixed(2) + '%</span>'
+      + '</div>';
+  }).join('');
+  list.innerHTML = html;
+}
+
+/* 同步指数口径切换按钮的选中/可用状态 */
+function renderIdxSeg(s) {
+  const seg = $('idxSeg');
+  if (!seg) return;
+  const cur = ((s && (s.weightMode || state.weightMode)) || 'oi').toLowerCase();
+  seg.querySelectorAll('button').forEach(b => {
+    b.classList.toggle('on', b.dataset.wm === cur && !b.disabled);
+    if (b.dataset.wm === 'tianqin') {
+      const tqOk = !!state.tqOk;
+      b.disabled = !tqOk;
+      b.title = tqOk
+        ? '使用天勤（快期）官方指数 KQ.i（当前为实时数据）'
+        : '天勤未就绪：请在 tianqin.json 填写快期账号（' + (state.tqErr || '未连接') + '）';
+    }
+  });
+  const foot = $('sideFoot');
+  if (foot) {
+    const label = cur === 'tianqin' ? '天勤官方指数（KQ.i / KQ.m）'
+      : cur === 'vol' ? '成交量加权指数' : '持仓量加权指数';
+    foot.textContent = '★ 主力 · ∑ ' + label + ' · 灰色为停牌品种';
+  }
+}
+
+/* ------------------------- 全品种树（左侧品种列表） ------------------------- */
+function prodMatches(it, kw) {
+  if (!kw) return true;
+  const p = it.product.toLowerCase(), n = it.name.toLowerCase();
+  return p.includes(kw) || n.includes(kw);
+}
+
+function renderProducts() {
+  const box = $('prodList');
+  const data = state.products;
+  if (!data) { box.innerHTML = ''; return; }
+  const kw = ($('prodSearch').value || '').trim().toLowerCase();
+  let total = 0, shown = 0;
+  const parts = [];
+  for (const g of data.groups) {
+    const items = g.items.filter(it => prodMatches(it, kw));
+    total += g.count;
+    shown += items.length;
+    if (!items.length) continue;
+    parts.push('<div class="exch"><span>' + g.exchange + '</span><span class="n">' + items.length + ' 个</span></div>');
+    for (const it of items) {
+      const c = it.pct > 0 ? 'up' : (it.pct < 0 ? 'down' : 'flat');
+      const sel = it.product === PRODUCT ? ' sel' : '';
+      const dead = it.tradeable ? '' : ' dead';
+      parts.push('<div class="prod' + sel + dead + '" data-product="' + it.product + '" title="' + it.name + ' ' + it.product + '">'
+        + '<span class="c">' + it.product + '</span>'
+        + '<span class="n">' + (it.name || it.product) + '</span>'
+        + '<span class="p num ' + (it.tradeable ? c : 'flat') + '">'
+        + (it.tradeable ? (it.pct >= 0 ? '+' : '') + it.pct.toFixed(2) + '%' : '停牌')
+        + '</span></div>');
+    }
+  }
+  box.innerHTML = parts.join('') || '<div class="side-foot">没有匹配的品种</div>';
+  $('prodHeadT').textContent = kw ? '搜索结果' : '全部品种';
+  $('prodHeadS').textContent = shown + ' / ' + total + ' 个';
+}
+
+async function loadProducts() {
+  try {
+    state.products = await api('/api/products');
+    renderProducts();
+  } catch (e) { /* 静默：品种树失败不影响主图 */ }
+}
+
+function switchProduct(product) {
+  product = String(product || '').toUpperCase();
+  if (!product || product === PRODUCT) return;
+  PRODUCT = product;
+  tryLS('sa.product', product);
+  // 切换品种默认落到主力连续合约
+  state.symbol = product + '0';
+  tryLS('sa.symbol', state.symbol);
+  // 重置视图状态：分时、K线、缩放、指标缓存全部丢弃，避免串品种
+  state.hover = null;
+  state.timeshare = null;
+  state.bars = [];
+  state.rawDaily = [];
+  state.autoView = true;
+  state.viewStart = 0;
+  state.viewCount = 0;
+  indCache = {};
+  renderProducts();
+  // 当前周期若是分时，refreshAll 内的 loadChart 会拉分时；否则主动补拉一次，
+  // 保证切品种后分时数据也同步刷新（否则先看日K再切品种时旧分时/空分时会残留）
+  refreshAll(true).catch(() => {});
+}
+
+function switchToSymbol(code) {
+  code = String(code || '').toUpperCase();
+  if (!code || code === state.symbol) return;
+  state.symbol = code;
+  tryLS('sa.symbol', code);
+  state.hover = null;
+  state.bars = []; state.timeshare = null;
+  refreshAll(true).catch(() => {});
+}
+
+function setStatus(ok, msg) {
+  $('hDot').className = 'dot ' + (ok ? 'on' : 'off');
+  const sess = $('hSess');
+  if (sess) {
+    const t = isTrading() ? '交易中' : '休市';
+    sess.textContent = ok ? t : (msg || '连接异常');
+  }
+}
+
+function showLoading(show, msg) {
+  const box = $('emptyBox');
+  box.style.display = show ? 'flex' : 'none';
+  if (msg) $('emptyText').textContent = msg;
+}
+
+function markActiveButtons() {
+  const isTS = state.period === 'timeshare';
+  document.querySelectorAll('#periodGroup .btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.period === state.period);
+  });
+  document.querySelectorAll('#mainIndGroup .btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.main === state.mainInd);
+    b.disabled = isTS;                          // 分时图不画 K 线，主图指标不可用
+    b.style.opacity = isTS ? .4 : 1;
+  });
+  document.querySelectorAll('#subIndBar .btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.ind === state.ind);
+  });
+}
+
+/* ============================== 数据加载 ============================== */
+async function loadQuote() {
+  try {
+    state.quote = await api('/api/quote', { symbol: state.symbol });
+    renderQuote();
+    setStatus(true);
+  } catch (e) {
+    setStatus(false, '行情异常');
+  }
+}
+
+/* 合约列表请求序号：口径/品种切换会并发发请求，慢响应可能后到，
+ * 必须丢弃过期响应，否则会用旧口径的数据覆盖新口径（曾导致切天勤失败）。 */
+let symSeq = 0;
+
+async function loadSymbols() {
+  const seq = ++symSeq;
+  const wantMode = state.weightMode;
+  const wantSym = state.symbol;
+  const wantProd = PRODUCT;
+  let data = null;
+  try {
+    data = await api('/api/symbols', {
+      product: wantProd, symbol: wantSym, weight: wantMode
+    });
+  } catch (e) { /* 静默：轮询/切品种时的偶发失败不打扰用户 */ return; }
+  // 期间用户又切了口径/品种/合约 → 本次结果已过期
+  if (seq !== symSeq || wantMode !== state.weightMode
+      || wantSym !== state.symbol || wantProd !== PRODUCT) return;
+  state.symbols = data;
+  renderSidebar();
+}
+
+/* 查询天勤（快期）可用性：决定「天勤」按钮是否可点。
+ * 注意 status.connected 只反映"是否已建连"，首次查询前恒为 false，
+ * 因此只要 installed && configured 就允许用户点击（真连不上时后端会回退）。 */
+async function loadTqStatus() {
+  try {
+    const st = await api('/api/tq/status');
+    state.tqOk = !!(st && st.installed && st.configured);
+    state.tqErr = st && st.lastError ? st.lastError : '';
+  } catch (e) {
+    state.tqOk = false;
+    state.tqErr = '接口不可用';
+  }
+  renderIdxSeg(state.symbols);
+}
+
+/* 切换指数口径：oi（持仓量加权）/ vol（成交量加权）/ tianqin（天勤官方）
+ * 返回 Promise：调用方可 await 到"列表已按新口径刷新完成"。 */
+function setWeightMode(mode) {
+  mode = String(mode || 'oi').toLowerCase();
+  if (!['oi', 'vol', 'tianqin'].includes(mode)) mode = 'oi';
+  if (mode === state.weightMode) return Promise.resolve(state.weightMode);
+  const keep = state.symbol;
+  state.weightMode = mode;
+  tryLS('sa.weightMode', mode);
+  renderIdxSeg(state.symbols);
+  // 指数口径变了：加权行的代码可能相同（SAW）但数值来源不同 → 右侧列表与图表都要刷新
+  return loadSymbols().then(() => {
+    // 若当前正停在加权行，需重新拉取该行的行情/分时/K线
+    if (/^[A-Za-z]{1,2}W$/.test(keep)) return refreshAll(true).catch(() => {});
+  }).catch(() => {}).then(() => state.weightMode);
+}
+
+/* 等待 symbols 与 state.weightMode 一致（口径切换是异步的，且天勤首次连接较慢）。
+ * 返回 true 表示已对齐，false 表示超时。 */
+function waitWeightMode(mode, timeoutMs) {
+  const deadline = Date.now() + (timeoutMs || 30000);
+  return new Promise(resolve => {
+    const tick = () => {
+      if (state.symbols && state.symbols.weightMode === mode
+          && state.weightMode === mode) return resolve(true);
+      if (Date.now() > deadline) return resolve(false);
+      setTimeout(tick, 100);
+    };
+    tick();
+  });
+}
+
+/* 事件绑定：指数口径分段按钮 */
+(function bindIdxSeg() {
+  const seg = $('idxSeg');
+  if (!seg) return;
+  seg.addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn || btn.disabled) return;
+    setWeightMode(btn.dataset.wm);
+  });
+})();
+
+async function loadChart(period) {
+  state.period = period;
+  markActiveButtons();
+
+  if (period === 'timeshare') {
+    const ts = await api('/api/timeshare', { symbol: state.symbol });
+    state.timeshare = ts;
+    // 用分时点合成"每分钟K"，使副图二的 MACD/KDJ/RSI/BOLL/WR/DMI 在分时模式下也可用
+    state.bars = ts.points.map((p, i) => {
+      const prev = i > 0 ? ts.points[i - 1].c : p.c;
+      return {
+        t: p.t, o: prev, h: Math.max(prev, p.c), l: Math.min(prev, p.c),
+        c: p.c, v: p.v, oi: p.oi, s: 0, avg: p.avg
+      };
+    });
+    state.rawDaily = [];
+    buildIndicators();
+    state.viewStart = 0; state.viewCount = ts.points.length; state.autoView = true;
+    draw();
+    return;
+  }
+
+  let bars;
+  if (SYNTH_PERIODS[period]) {
+    const daily = await api('/api/kline', { symbol: state.symbol, period: 'day' });
+    state.rawDaily = daily.bars;
+    bars = synth(daily.bars, period);
+  } else {
+    const k = await api('/api/kline', { symbol: state.symbol, period: period });
+    bars = k.bars;
+  }
+  const changed = bars.length !== state.bars.length;
+  state.bars = bars;
+  if (changed) buildIndicators();
+  else {
+    // 数据长度没变也要重算（收盘价可能变了）
+    buildIndicators();
+  }
+  setPeriodView(period);
+  draw();
+}
+
+async function refreshAll(showSpinner) {
+  if (state.loading) return;
+  state.loading = true;
+  if (showSpinner) showLoading(true, '加载数据…');
+  try {
+    await Promise.all([
+      loadQuote(),
+      loadSymbols(),
+      loadChart(state.period)
+    ]);
+    state.lastDataAt = Date.now();
+    if (state.bars.length === 0 && state.period !== 'timeshare') {
+      showLoading(true, '该周期暂无数据');
+    } else if (state.period === 'timeshare' && state.timeshare && !state.timeshare.points.length) {
+      showLoading(true, '该合约暂无分时数据');
+    } else {
+      showLoading(false);
+    }
+  } catch (e) {
+    showLoading(true, '加载失败：' + e.message);
+    setStatus(false, '加载失败');
+  } finally {
+    state.loading = false;
+  }
+}
+
+/* ============================== 交互 ============================== */
+function bindUI() {
+  // 周期
+  $('periodGroup').addEventListener('click', e => {
+    const b = e.target.closest('button[data-period]');
+    if (!b) return;
+    const p = b.dataset.period;
+    if (p === state.period) return;
+    tryLS('sa.period', p);
+    state.hover = null;
+    loadChart(p).catch(err => showLoading(true, '加载失败：' + err.message));
+  });
+
+  // 主图指标
+  $('mainIndGroup').addEventListener('click', e => {
+    const b = e.target.closest('button[data-main]');
+    if (!b || b.disabled) return;
+    state.mainInd = b.dataset.main;
+    tryLS('sa.mainInd', state.mainInd);
+    markActiveButtons();
+    draw();
+  });
+
+  // 副图二指标（浮层，位于副图二上方）
+  $('subIndBar').addEventListener('click', e => {
+    const b = e.target.closest('button[data-ind]');
+    if (!b || b.disabled) return;
+    state.ind = b.dataset.ind;
+    tryLS('sa.ind', state.ind);
+    markActiveButtons();
+    buildIndicators();
+    draw();
+  });
+
+  // 合约切换
+  // 品种列表（点击切换品种，默认落到主力连续合约）
+  $('prodList').addEventListener('click', e => {
+    const row = e.target.closest('.prod');
+    if (!row) return;
+    const p = row.dataset.product;
+    if (!p || p === PRODUCT) return;
+    const meta = (state.products ? state.products.groups : [])
+      .flatMap(g => g.items).find(it => it.product === p);
+    // 停牌品种仍允许查看历史行情，但切换前给出提示
+    if (meta && !meta.tradeable && !window.confirm(meta.name + '（' + p + '）当前已停牌，仅有历史数据，仍要查看吗？')) {
+      return;
+    }
+    switchProduct(p);
+  });
+
+  // 品种搜索
+  $('prodSearch').addEventListener('input', renderProducts);
+
+  $('symList').addEventListener('click', e => {
+    const row = e.target.closest('.sym');
+    if (!row) return;
+    switchToSymbol(row.dataset.code);
+  });
+
+  // 主题
+  $('btnTheme').addEventListener('click', () => {
+    state.theme = state.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = state.theme;
+    tryLS('sa.theme', state.theme);
+    draw();
+  });
+
+  // 复位 / 全览
+  $('btnReset').addEventListener('click', () => { resetView(); });
+  $('btnFit').addEventListener('click', () => { fitAll(); });
+
+  // 鼠标
+  cvMain.addEventListener('mousemove', e => {
+    const r = cvMain.getBoundingClientRect();
+    state.hover = { x: e.clientX - r.left, y: e.clientY - r.top, idx: null, zone: null, inside: true };
+    drawOverlayCursor();
+    if (state.period !== 'timeshare') draw(); else drawOverlayCursor();
+  });
+  cvMain.addEventListener('mouseleave', () => {
+    state.hover = null;
+    octx.clearRect(0, 0, W, H);
+    if (state.period !== 'timeshare') draw();
+  });
+
+  // 滚轮缩放
+  cvMain.addEventListener('wheel', e => {
+    if (state.period === 'timeshare') return;
+    e.preventDefault();
+    const n = state.bars.length;
+    if (!n) return;
+    const R = visibleRange();
+    const r = cvMain.getBoundingClientRect();
+    const mx = e.clientX - r.left;
+    const ratio = clamp((mx - PAD.left) / (W - PAD.left - PAD.right), 0, 1);
+    const anchor = R.start + ratio * R.count;
+    const factor = e.deltaY > 0 ? 1.15 : 1 / 1.15;
+    const newCount = clamp(Math.round(R.count * factor), Math.min(10, n), n);
+    state.viewCount = newCount;
+    state.autoView = false;
+    state.viewStart = clamp(Math.round(anchor - ratio * newCount), 0, Math.max(0, n - newCount));
+    draw();
+  }, { passive: false });
+
+  // 拖动平移
+  let dragging = false, dragX = 0, dragStart = 0, dragCount = 1;
+  cvMain.addEventListener('mousedown', e => {
+    if (state.period === 'timeshare') return;
+    dragging = true; dragX = e.clientX; dragStart = state.viewStart; dragCount = visibleRange().count;
+    cvMain.style.cursor = 'grabbing';
+  });
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const n = state.bars.length;
+    const bw = (W - PAD.left - PAD.right) / dragCount;
+    const dx = Math.round((dragX - e.clientX) / bw);
+    state.autoView = false;
+    state.viewStart = clamp(dragStart + dx, 0, Math.max(0, n - dragCount));
+    draw();
+  });
+  window.addEventListener('mouseup', () => {
+    if (dragging) { dragging = false; cvMain.style.cursor = 'crosshair'; }
+  });
+
+  // 键盘
+  window.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT') return;
+    if (e.key === 'ArrowLeft') pan(-0.15);
+    else if (e.key === 'ArrowRight') pan(0.15);
+    else if (e.key === '=' || e.key === '+') zoom(-0.15);
+    else if (e.key === '-') zoom(0.15);
+    else if (e.key.toLowerCase() === 'r') resetView();
+  });
+
+  // 触屏：单指拖动平移 / 双指捏合缩放（移动端与触控屏可用）
+  let touchMode = 0, tStartX = 0, tStartView = 0, tCount = 1, tPinchDist = 0, tPinchCount = 1,
+      tPinchAnchor = 0.5;
+  const touchDist = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+
+  cvMain.addEventListener('touchstart', e => {
+    if (state.period === 'timeshare') return;
+    const n = state.bars.length;
+    if (!n) return;
+    if (e.touches.length === 1) {
+      touchMode = 1;
+      tStartX = e.touches[0].clientX;
+      tStartView = visibleRange().start;
+      tCount = visibleRange().count;
+    } else if (e.touches.length === 2) {
+      touchMode = 2;
+      tPinchDist = touchDist(e.touches[0], e.touches[1]);
+      tPinchCount = visibleRange().count;
+      const R = visibleRange();
+      const r = cvMain.getBoundingClientRect();
+      const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - r.left;
+      tPinchAnchor = clamp((midX - PAD.left) / (W - PAD.left - PAD.right), 0, 1);
+    }
+  }, { passive: true });
+
+  cvMain.addEventListener('touchmove', e => {
+    if (state.period === 'timeshare' || !touchMode) return;
+    const n = state.bars.length;
+    if (touchMode === 1 && e.touches.length === 1) {
+      e.preventDefault();
+      const bw = (W - PAD.left - PAD.right) / tCount;
+      const dx = Math.round((tStartX - e.touches[0].clientX) / bw);
+      state.autoView = false;
+      state.viewStart = clamp(tStartView + dx, 0, Math.max(0, n - tCount));
+      draw();
+    } else if (touchMode === 2 && e.touches.length === 2) {
+      e.preventDefault();
+      const d = touchDist(e.touches[0], e.touches[1]);
+      if (!tPinchDist) return;
+      const scale = tPinchDist / d;                 // 手指张开 → 显示更少 → 放大
+      const newCount = clamp(Math.round(tPinchCount * scale), Math.min(10, n), n);
+      state.viewCount = newCount;
+      state.autoView = false;
+      state.viewStart = clamp(
+        Math.round(tPinchAnchor * tPinchCount - tPinchAnchor * newCount
+                   + (visibleRange().start)),
+        0, Math.max(0, n - newCount));
+      draw();
+    }
+  }, { passive: false });
+
+  cvMain.addEventListener('touchend', e => {
+    if (e.touches.length === 0) touchMode = 0;
+    else if (e.touches.length === 1) {              // 双指松开变单指 → 续接平移
+      touchMode = 1;
+      tStartX = e.touches[0].clientX;
+      tStartView = visibleRange().start;
+      tCount = visibleRange().count;
+    }
+  }, { passive: true });
+
+  // 尺寸
+  const ro = new ResizeObserver(() => { fitCanvas(); draw(); });
+  ro.observe(cvMain.parentElement);
+
+  // 底部折叠面板
+  const foot = $('chartFoot'), head = $('cfHead');
+  if (foot && head) {
+    const toggle = () => {
+      const open = foot.classList.toggle('open');
+      head.setAttribute('aria-expanded', open ? 'true' : 'false');
+      tryLS('sa.footOpen', open ? '1' : '0');
+      // 折叠改变可用高度 → 等布局完成后重算画布
+      requestAnimationFrame(() => { fitCanvas(); draw(); });
+    };
+    head.addEventListener('click', toggle);
+    head.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+    });
+    if (tryLS('sa.footOpen') === '1') {
+      foot.classList.add('open');
+      head.setAttribute('aria-expanded', 'true');
+    }
+  }
+
+  // 微信号点击复制
+  const wx = $('cfWechat');
+  if (wx) {
+    wx.addEventListener('click', () => {
+      const txt = 'gongqizi0';
+      const done = () => {
+        const old = wx.textContent;
+        wx.textContent = '已复制 ' + txt;
+        wx.classList.add('copied');
+        setTimeout(() => { wx.textContent = old; wx.classList.remove('copied'); }, 1400);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt).then(done).catch(done);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); } catch (e) { /* 忽略 */ }
+        document.body.removeChild(ta); done();
+      }
+    });
+  }
+}
+
+function resetView() {
+  if (state.period === 'timeshare') { state.autoView = true; draw(); return; }
+  setPeriodView(state.period);
+  draw();
+}
+function fitAll() {
+  if (state.period === 'timeshare') { draw(); return; }
+  state.viewCount = state.bars.length;
+  state.viewStart = 0;
+  state.autoView = true;
+  draw();
+}
+function pan(ratio) {
+  if (state.period === 'timeshare') return;
+  const n = state.bars.length;
+  const R = visibleRange();
+  state.autoView = false;
+  state.viewStart = clamp(R.start + Math.round(R.count * ratio), 0, Math.max(0, n - R.count));
+  draw();
+}
+function zoom(ratio) {
+  if (state.period === 'timeshare') return;
+  const n = state.bars.length;
+  const R = visibleRange();
+  const newCount = clamp(Math.round(R.count * (1 + ratio)), Math.min(10, n), n);
+  const center = R.start + R.count / 2;
+  state.viewCount = newCount;
+  state.autoView = false;
+  state.viewStart = clamp(Math.round(center - newCount / 2), 0, Math.max(0, n - newCount));
+  draw();
+}
+
+/* ============================== 轮询 ============================== */
+let timerQuote = null, timerChart = null, timerSym = null;
+
+function startPolling() {
+  clearInterval(timerQuote); clearInterval(timerChart); clearInterval(timerSym);
+  const fast = isTrading();
+  timerQuote = setInterval(loadQuote, fast ? 3000 : 20000);
+  timerSym = setInterval(loadSymbols, 15000);
+  timerChart = setInterval(() => {
+    // 只在自动跟随最新时静默刷新图表
+    if (document.hidden) return;
+    loadChart(state.period).catch(() => {});
+  }, fast ? 10000 : 60000);
+}
+
+/* ============================== 启动 ============================== */
+function boot() {
+  // URL 参数优先：?symbol=SA2701&product=SA&period=day&ind=MACD&theme=light
+  let urlSym = null, urlProd = null;
+  try {
+    const q = new URLSearchParams(location.search);
+    const sym = q.get('symbol');
+    if (sym && /^[A-Za-z]{1,2}(\d{3,4}|0|W)$/.test(sym)) { urlSym = sym.toUpperCase(); state.symbol = urlSym; tryLS('sa.symbol', state.symbol); }
+    const prod = q.get('product');
+    if (prod && /^[A-Za-z]{1,2}$/.test(prod)) { urlProd = prod.toUpperCase(); PRODUCT = urlProd; tryLS('sa.product', PRODUCT); }
+    const per = q.get('period');
+    if (per && PERIOD_LABEL[per]) { state.period = per; tryLS('sa.period', per); }
+    const ind = q.get('ind');
+    if (ind && ['MACD', 'KDJ', 'RSI', 'BOLL', 'WR', 'DMI'].includes(ind.toUpperCase())) { state.ind = ind.toUpperCase(); tryLS('sa.ind', state.ind); }
+    const mi = q.get('main');
+    if (mi && ['MA', 'SAR', 'BOLL', 'EXPMA', 'BBIBOLL'].includes(mi.toUpperCase())) { state.mainInd = mi.toUpperCase(); tryLS('sa.mainInd', state.mainInd); }
+    const th = q.get('theme');
+    if (th === 'light' || th === 'dark') { state.theme = th; tryLS('sa.theme', th); }
+    const wm = (q.get('weight') || '').toLowerCase();
+    if (wm === 'oi' || wm === 'vol' || wm === 'tianqin') { state.weightMode = wm; tryLS('sa.weightMode', wm); }
+  } catch (e) { /* 忽略 */ }
+
+  document.documentElement.dataset.theme = state.theme;
+  // 以已保存的合约为准回推品种，避免刷新后品种列表高亮错位；
+  // 但 URL 明确给了 product 时以它为准（本地存的旧合约不能覆盖链接意图）
+  if (urlProd) {
+    if (!urlSym || state.symbol.slice(0, urlProd.length).toUpperCase() !== urlProd) {
+      state.symbol = urlProd + '0';
+      tryLS('sa.symbol', state.symbol);
+    }
+    PRODUCT = urlProd;
+  } else {
+    const pm = /^([A-Za-z]{1,2})(?:\d+|W)$/.exec(state.symbol);
+    if (pm) PRODUCT = pm[1].toUpperCase();
+  }
+  markActiveButtons();
+  fitCanvas();
+  bindUI();
+  loadProducts();
+  // 天勤可用性先探一次：拿到结果前「天勤」按钮保持禁用，避免用户点了没反应
+  loadTqStatus().finally(() => loadSymbols());
+  refreshAll(true).then(() => {
+    fitCanvas(); draw();
+    startPolling();
+  });
+  // 每小时重算一次轮询节奏（跨交易时段切换）
+  setInterval(startPolling, 3600 * 1000);
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+else boot();
+
+return { state, draw, resetView, fitAll, loadChart, refreshAll, TA, synth, palette, visibleRange,
+         minuteKey, niceTimeshareRange, priceDigits, tsAxisData, nearestBySlot,
+         loadProducts, renderProducts, switchProduct, switchToSymbol,
+         loadSymbols, loadTqStatus, setWeightMode, renderSidebar,
+         getProduct: () => PRODUCT };
+})();
+
+window.App = App;   // 暴露到全局，便于控制台调试 / 内联调用
+</script>
+</body>
+</html>
