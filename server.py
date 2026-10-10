@@ -75,6 +75,27 @@ EXE_DIR = (os.path.dirname(os.path.abspath(sys.executable))
 # 兼容旧代码：静态资源继续走 APP_DIR
 APP_DIR = BUNDLE_DIR
 
+# 面板前端 HTML 的文件名。
+#   · 本地开发 / PyInstaller 打包  —— 叫 index.html
+#   · GitHub 仓库                 —— 叫 app.html（根目录 index.html 让给 Pages 落地页）
+# 两个名字都认，谁先存在用谁，这样"克隆仓库直接跑"和"运行 exe"都能开箱可用。
+PANEL_HTML_NAMES = ("index.html", "app.html")
+_PANEL_HTML_CACHE = None
+
+
+def panel_html_path() -> str:
+    """定位面板前端 HTML（带缓存）。找不到时返回 index.html 的路径，交由 _static 报 404。"""
+    global _PANEL_HTML_CACHE
+    if _PANEL_HTML_CACHE and os.path.isfile(_PANEL_HTML_CACHE):
+        return _PANEL_HTML_CACHE
+    for name in PANEL_HTML_NAMES:
+        cand = os.path.join(APP_DIR, name)
+        if os.path.isfile(cand):
+            _PANEL_HTML_CACHE = cand
+            return cand
+    return os.path.join(APP_DIR, PANEL_HTML_NAMES[0])
+
+
 DEFAULT_SYMBOL = "SA2701"
 DEFAULT_PRODUCT = "SA"
 DEFAULT_PORT = 8686
@@ -1182,8 +1203,8 @@ class Handler(BaseHTTPRequestHandler):
             if path.startswith("/api/"):
                 return self._api(path, arg)
 
-            if path in ("/", "/index.html"):
-                return self._static(os.path.join(APP_DIR, "index.html"))
+            if path in ("/", "/index.html", "/app.html"):
+                return self._static(panel_html_path())
 
             if path == "/favicon.ico":
                 return self._send(204, b"", "image/x-icon")
