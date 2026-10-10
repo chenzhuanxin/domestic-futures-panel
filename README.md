@@ -15,8 +15,10 @@
 | 📖 **使用说明** | https://chenzhuanxin.github.io/domestic-futures-panel/usage.html |
 | 🔌 **数据源说明** | https://chenzhuanxin.github.io/domestic-futures-panel/datasource.html |
 
-> 附件名 `futures-panel-v1.0.0.exe`（约 74 MB）。
-> SHA-256：`18d7727220c5a00d61d83ee8473e83da6142e6478d96f2bdaa0a12a3b935bab3`
+> 附件名 `futures-panel-v1.0.0.exe`（74.4 MB / 77,995,654 字节）。
+> SHA-256：`9156159891997ec42abfe0759178c31cac2dfb011e5acda4f4015fad3fb8aa9c`
+>
+> 下载版**不内置任何账号**，「天勤」档默认置灰；要用官方主连/指数请自行放 `tianqin.json`（见「运行」一节）。
 
 ## 功能
 
@@ -89,8 +91,11 @@
 
 - 首次启动会解压到临时目录，约 **5~15 秒**（含启动自检），之后正常；
 - 保留控制台窗口，会打印面板地址、天勤状态、行情连通情况，按 `Ctrl+C` 退出；
-- **换天勤账号不必重新打包**：把 `tianqin.json` 放在 EXE **同目录**即可覆盖内置账号
-  （也可以设 `enabled:false` 停用）；没有外置文件时用内置的出厂账号。
+- **天勤账号请自己填**：下载版 **不内置任何账号**。把 `tianqin.json.example` 复制成
+  `tianqin.json` 放在 EXE **同目录**，填上自己的快期账号并把 `enabled` 改为 `true`，
+  重启即启用「天勤」指数档；不填则该档置灰，其余功能不受影响。
+  （源码里改 `tianqin.json` 后再打包，可让内置生效；但**内置账号的 EXE 不要公开分发**，
+  见下方「打包（PyInstaller）说明」的安全提醒。）
 
 ### 方式二：源码运行
 
@@ -303,6 +308,29 @@ domestic-futures-panel/          # ← 本仓库
 
 单文件 EXE（`console=True`，保留控制台便于排错），实测 **74 MB**，启动约 5~15 秒。
 下面 5 个坑都是打包过程中真实踩到并修复的，改 spec 前建议先读一遍。
+
+### 0. ⚠ 先决定：这个 EXE 要不要公开分发
+
+**PyInstaller 的归档不是加密。** 用 `datas` 打进去的 `tianqin.json`（含账号密码）
+可以用几行代码取出明文：
+
+```python
+from PyInstaller.archive.readers import CArchiveReader
+import zlib
+print(zlib.decompress(CArchiveReader('期货行情面板.exe').extract('tianqin.json')).decode())
+```
+
+注意：**直接 grep EXE 搜不到明文**（数据是压缩存的），别因此以为安全——要按"可解出"来假设。
+
+所以 spec 里做了构建档位切换：
+
+| 档位 | 命令 | 内置账号 | 用途 |
+|---|---|---|---|
+| 个人版 | `python -m PyInstaller --clean --noconfirm 期货行情面板.spec` | 用本地 `tianqin.json` | **仅自己本机用** |
+| 公开版 | `set PANEL_PUBLIC_BUILD=1` 后再执行上面那条 | 用 `tianqin.public.json`（空账号 + `enabled:false`） | **可以上传 Release 分发** |
+
+公开版产物名为 `dist/期货行情面板-公开版.exe`，启动后 `/api/tq/status` 应为
+`installed:true`（tqsdk 在包里）但 `configured:false`（没账号）——这正是预期状态。
 
 ### 1. 资源路径：`__file__` 在打包后指向临时目录
 
