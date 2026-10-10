@@ -1,0 +1,8 @@
+{
+  "_说明": "公开版出厂配置：故意留空。EXE 内的任何配置都能被解出，公开分发不能内置账号。",
+  "_用法": "把本文件复制为 tianqin.json 放在 EXE 同目录，填入自己的快期账号并置 enabled:true，重启即可。",
+  "_注册": "没有账号去 https://account.shinnytech.com/ 免费注册（快期账号通用）",
+  "auth_user": "",
+  "auth_pass": "",
+  "enabled": false
+}
