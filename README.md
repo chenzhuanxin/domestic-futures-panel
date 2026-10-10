@@ -6,6 +6,18 @@
 
 ![预览](https://img.shields.io/badge/Python-3.8%2B-blue) ![依赖](https://img.shields.io/badge/%E4%BE%9D%E8%B5%96-%E9%9B%B6-green)
 
+## 下载 / 在线文档
+
+| 入口 | 地址 |
+|---|---|
+| **⬇ 下载 EXE（免安装，推荐）** | [Releases · v1.0.0](https://github.com/chenzhuanxin/domestic-futures-panel/releases/latest) |
+| 🌐 **在线主页** | https://chenzhuanxin.github.io/domestic-futures-panel/ |
+| 📖 **使用说明** | https://chenzhuanxin.github.io/domestic-futures-panel/usage.html |
+| 🔌 **数据源说明** | https://chenzhuanxin.github.io/domestic-futures-panel/datasource.html |
+
+> 附件名 `futures-panel-v1.0.0.exe`（约 74 MB）。
+> SHA-256：`18d7727220c5a00d61d83ee8473e83da6142e6478d96f2bdaa0a12a3b935bab3`
+
 ## 功能
 
 - **实时行情**：最新价、涨跌（相对昨结算）、今开/最高/最低/昨结、成交量、持仓量、买一/卖一
@@ -86,17 +98,22 @@
 python server.py
 ```
 
-或直接双击 `启动面板.bat`。启动后自动打开浏览器：
+或直接双击 `启动面板.bat`（仓库里叫 `start-panel.bat`）。启动后自动打开浏览器：
 
 ```
 http://127.0.0.1:8686/
 ```
 
+> 源码模式需要 Python 3.8+；**除天勤功能外零第三方依赖**。若要用「天勤」指数档，
+> 需 `pip install tqsdk`，并把 `tianqin.json.example` 复制成 `tianqin.json` 填账号。
+
 ### 自己重新打包
 
 ```bash
-打包.bat                 # 或手动执行下面这条
-python -m PyInstaller --clean --noconfirm 期货行情面板.spec
+打包.bat                 # 仓库里叫 build-exe.bat
+# 或手动执行：
+python -m PyInstaller --clean --noconfirm 期货行情面板.spec   # 仓库里叫 futures-panel.spec
+python -m PyInstaller --clean --noconfirm futures-panel.spec  # ← 在克隆的仓库里用这条
 ```
 
 产物在 `dist/期货行情面板.exe`。打包要点与踩坑见文末「打包（PyInstaller）说明」。
@@ -188,19 +205,29 @@ python tests/probe_api.py
 
 ## 目录结构
 
+```text
+domestic-futures-panel/          # ← 本仓库
+├── server.py                    # Python 后端（标准库，零依赖）
+├── weighted_index.py            # 加权指数合成 / 天勤（快期）对接
+├── app.html                     # ★ 面板前端（单文件，内联 CSS/JS，可离线）
+├── index.html                   # GitHub Pages 落地页（非面板本体）
+├── usage.html                   # Pages 版《使用说明》
+├── datasource.html              # Pages 版《数据源说明》
+├── tianqin.json.example         # 天勤账号配置模板（复制为 tianqin.json 后填写）
+├── futures-panel.spec           # PyInstaller 打包配置
+├── pyinstaller_hooks/           # 补充 hook（补齐 tqsdk 的第三方依赖）
+├── build-exe.bat                # 双击打包成 EXE
+├── start-panel.bat              # 源码模式双击启动
+├── build_site.py                # Markdown → Pages 站点生成器
+├── docs/                        # 文档源（Markdown）
+│   ├── usage.md
+│   └── datasource.md
+└── tests/                       # 回归测试
 ```
-soda-ash-panel/
-├── server.py          # Python 后端（标准库，零依赖）
-├── weighted_index.py  # 加权指数合成 / 天勤（快期）对接
-├── index.html         # 前端面板（单文件，内联 CSS/JS，可离线）
-├── tianqin.json       # 天勤（快期）账号配置，可选
-├── 期货行情面板.spec   # PyInstaller 打包配置
-├── pyinstaller_hooks/ # 补充 hook（补齐 tqsdk 的第三方依赖）
-├── 打包.bat            # 双击打包成 EXE
-├── 启动面板.bat        # 源码模式双击启动
-├── tests/             # 回归测试
-└── README.md
-```
+
+> ⚠ **前端文件名**：仓库里面板前端叫 `app.html`（根目录的 `index.html` 让给 GitHub Pages
+> 落地页）。`server.py` 的 `panel_html_path()` 对 `index.html` / `app.html` 两个名字都认，
+> 克隆仓库后直接 `python server.py` 即可正常工作，无需改名。
 
 ---
 
