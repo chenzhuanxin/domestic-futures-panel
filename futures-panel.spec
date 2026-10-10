@@ -2,6 +2,11 @@
 """PyInstaller 打包配置 · 国内期货行情面板（单文件 EXE）
 
 构建：
+    # 个人版（内置自己的快期账号，仅供自用，切勿公开分发）
+    C:/Python314/python.exe -m PyInstaller --clean --noconfirm 期货行情面板.spec
+
+    # 公开版（不内置任何凭据，可安全上传 GitHub Release）
+    set PANEL_PUBLIC_BUILD=1
     C:/Python314/python.exe -m PyInstaller --clean --noconfirm 期货行情面板.spec
 
 要点：
@@ -11,6 +16,13 @@
     tianqin.json 则优先生效（见 weighted_index._resolve_tq_config_path）
   · tqsdk 采用惰性导入，附带的 hook 会自动收 web/ 与 expired_quotes.json.lzma
   · 排除用不到的重型库，压缩体积
+
+⚠ 安全提醒（一定要读）
+  PyInstaller 的归档**不是加密**，打进去的 tianqin.json 可以用几行代码取出明文：
+      from PyInstaller.archive.readers import CArchiveReader
+      import zlib
+      print(zlib.decompress(CArchiveReader('xx.exe').extract('tianqin.json')).decode())
+  所以**公开发布必须走 PANEL_PUBLIC_BUILD=1**，内置账号只用于自己本机使用。
 """
 
 import os
@@ -20,10 +32,28 @@ from PyInstaller.utils.hooks import collect_submodules
 
 HERE = os.path.abspath(os.path.dirname(SPEC))          # noqa: F821  (SPEC 由 PyInstaller 注入)
 
+# 公开版开关：置 1 时不内置账号（用 tianqin.public.json 冒充 tianqin.json 打进去）
+PUBLIC_BUILD = os.environ.get('PANEL_PUBLIC_BUILD', '').strip() == '1'
+
+if PUBLIC_BUILD:
+    # datas 不支持重命名，所以先把备用文件拷成名为 tianqin.json 的暂存副本再打进去
+    _stage = os.path.join(HERE, '_public_stage')
+    os.makedirs(_stage, exist_ok=True)
+    _src = os.path.join(HERE, 'tianqin.public.json')
+    with open(_src, 'rb') as _f:
+        _payload = _f.read()
+    with open(os.path.join(_stage, 'tianqin.json'), 'wb') as _f:
+        _f.write(_payload)
+    TQ_JSON = os.path.join(_stage, 'tianqin.json')
+    EXE_NAME = '期货行情面板-公开版'
+else:
+    TQ_JSON = os.path.join(HERE, 'tianqin.json')
+    EXE_NAME = '期货行情面板'
+
 # 需要随包携带的只读资源
 datas = [
     (os.path.join(HERE, 'index.html'), '.'),
-    (os.path.join(HERE, 'tianqin.json'), '.'),
+    (TQ_JSON, '.'),
 ]
 
 # tqsdk 是惰性导入（函数内 import），静态分析扫不到 → 显式声明。
@@ -89,7 +119,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='期货行情面板',
+    name=EXE_NAME,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
