@@ -272,6 +272,15 @@ footer .sign b{color:var(--acc)}
       </div>
     </div>
 
+    <div class="note">
+      <b>关于天勤（快期）账号：</b>下载版<b>不内置任何账号</b>——EXE 里的配置任何人都能解出来，
+      公开分发内置账号不安全。所以「天勤」指数档默认置灰，<b>其余功能完全不受影响</b>。
+      要用官方主连 / 指数，把仓库里的 <code>tianqin.json.example</code> 复制成
+      <code>tianqin.json</code> 放到 EXE 同目录，填上自己的快期账号
+      （<a href="https://account.shinnytech.com/" target="_blank" rel="noopener">免费注册</a>）
+      并把 <code>enabled</code> 改成 <code>true</code>，重启即可。
+    </div>
+
     <h2 style="margin-top:44px;font-size:19px">源码运行（需 Python 3.8+）</h2>
     <p class="sub">后端是纯标准库实现，<b>不需要 pip install 任何东西</b>。</p>
 <pre><code>git clone https://github.com/chenzhuanxin/domestic-futures-panel.git
