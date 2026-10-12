@@ -97,7 +97,7 @@ footer .row{display:flex;flex-wrap:wrap;gap:8px 20px;margin-bottom:10px}
 <blockquote><p>一个<strong>单机运行</strong>的国内全品种期货行情面板。覆盖中金所 / 上期所 / 大商所 / 郑商所 / 广期所</p><p>共 <strong>79 个品种</strong>，支持实时行情、分时、1~120 分钟 K 线、日 / 周 / 月 / 年 K、</p><p>成交量持仓量副图、六种技术指标，并提供<strong>自研的持仓量加权指数</strong>。</p><p>设计：<strong>公歧子</strong>　微信：<strong>gongqizi0</strong></p></blockquote>
 <hr>
 <h2 id="h-目录">目录</h2>
-<ol><li><a href="#一这是什么">这是什么</a></li><li><a href="#二两种运行方式">两种运行方式</a></li><li><a href="#三界面导览">界面导览</a></li><li><a href="#四行情头部字段释义">行情头部字段释义</a></li><li><a href="#五周期与-k-线">周期与 K 线</a></li><li><a href="#六主图指标">主图指标</a></li><li><a href="#七副图一成交与持仓">副图一：成交与持仓</a></li><li><a href="#八副图二技术指标">副图二：技术指标</a></li><li><a href="#九指数口径加权-vs-主连">指数口径：加权 vs 主连</a></li><li><a href="#十图表操作全表">图表操作全表</a></li><li><a href="#十一品种与合约列表">品种与合约列表</a></li><li><a href="#十二主题与配置记忆">主题与配置记忆</a></li><li><a href="#十三命令行参数">命令行参数</a></li><li><a href="#十四url-参数">URL 参数</a></li><li><a href="#十五天勤快期账号配置">天勤（快期）账号配置</a></li><li><a href="#十六自己重新打包-exe">自己重新打包 EXE</a></li><li><a href="#十七常见问题">常见问题</a></li></ol>
+<ol><li><a href="#h-一-这是什么">这是什么</a></li><li><a href="#h-二-两种运行方式">两种运行方式</a></li><li><a href="#h-三-界面导览">界面导览</a></li><li><a href="#h-四-行情头部字段释义">行情头部字段释义</a></li><li><a href="#h-五-周期与-k-线">周期与 K 线</a></li><li><a href="#h-六-主图指标">主图指标</a></li><li><a href="#h-七-副图一-成交与持仓">副图一：成交与持仓</a></li><li><a href="#h-八-副图二-技术指标">副图二：技术指标</a></li><li><a href="#h-九-指数口径-加权-vs-主连">指数口径：加权 vs 主连</a></li><li><a href="#h-十-图表操作全表">图表操作全表</a></li><li><a href="#h-十一-品种与合约列表">品种与合约列表</a></li><li><a href="#h-十二-主题与配置记忆">主题与配置记忆</a></li><li><a href="#h-十三-命令行参数">命令行参数</a></li><li><a href="#h-十四-url-参数">URL 参数</a></li><li><a href="#h-十五-天勤-快期-账号配置">天勤（快期）账号配置</a></li><li><a href="#h-十六-自己重新打包-exe">自己重新打包 EXE</a></li><li><a href="#h-十七-常见问题">常见问题</a></li></ol>
 <hr>
 <h2 id="h-一-这是什么">一、这是什么</h2>
 <p>一个跑在你自己电脑上的期货行情看盘工具。核心特点：</p>
@@ -125,7 +125,7 @@ footer .row{display:flex;flex-wrap:wrap;gap:8px 20px;margin-bottom:10px}
 <ul><li><strong>首次启动较慢（5~20 秒）</strong>：单文件 EXE 每次启动都要把约 74 MB 解压到临时目录，属正常现象，不是卡死。</li><li><strong>关闭方式</strong>：关掉那个黑色控制台窗口，或按 <code>Ctrl+C</code>。</li><li><strong>天勤账号请自己填</strong>：官方发布版<strong>不内置账号</strong>（EXE 内的配置能被任何人解出，公开分发</li></ul>
 <p>内置账号不安全）。把 <code>tianqin.json.example</code> 复制成 <code>tianqin.json</code> 放在 EXE 同目录、</p>
 <p>填上自己的快期账号并置 <code>enabled: true</code>，重启即启用「天勤」档；不填则该档置灰。</p>
-<ul><li><strong>保留黑窗口是有意的</strong>：启动失败时能直接看到报错原因；如果你更想要纯净体验，可以自己重新打包时把 <code>console=True</code> 改成 <code>console=False</code>（见<a href="#十六自己重新打包-exe">第十六节</a>）。</li><li>若提示"未配置 Python"之类的错误，说明你运行的是源码版的 <code>.bat</code>，请确认用的是 <code>.exe</code>。</li></ul>
+<ul><li><strong>保留黑窗口是有意的</strong>：启动失败时能直接看到报错原因；如果你更想要纯净体验，可以自己重新打包时把 <code>console=True</code> 改成 <code>console=False</code>（见<a href="#h-十六-自己重新打包-exe">第十六节</a>）。</li><li>若提示"未配置 Python"之类的错误，说明你运行的是源码版的 <code>.bat</code>，请确认用的是 <code>.exe</code>。</li></ul>
 <h3 id="h-方式二-源码运行-需-python-3-8">方式二：源码运行（需 Python 3.8+）</h3>
 <pre><code># 1. 下载源码
 git clone https://github.com/chenzhuanxin/domestic-futures-panel.git
@@ -173,13 +173,26 @@ python server.py
 <hr>
 <h2 id="h-五-周期与-k-线">五、周期与 K 线</h2>
 <p>支持 11 个周期：</p>
-<div class="tw"><table><thead><tr><th>周期</th><th>数据来源</th><th>数量上限</th></tr></thead><tbody><tr><td><strong>分时</strong></td><td>当日分时走势</td><td>当日全部</td></tr><tr><td><strong>1 / 5 / 15 / 30 / 60 / 120 分</strong></td><td>上游分钟 K 接口</td><td>约 1023 根（上游单次上限）</td></tr><tr><td><strong>日 K</strong></td><td>上游日 K 接口</td><td>全量历史（可回溯约 4~7 年）</td></tr><tr><td><strong>周 / 月 / 年 K</strong></td><td><strong>前端由日 K 合成</strong></td><td>全量</td></tr></tbody></table></div>
+<div class="tw"><table><thead><tr><th>周期</th><th>数据来源</th><th>数量上限</th></tr></thead><tbody><tr><td><strong>分时</strong></td><td>当日分时走势</td><td>当日全部</td></tr><tr><td><strong>1 / 5 分</strong></td><td>上游分钟 K 接口</td><td>约 1023 根（上游单次上限）</td></tr><tr><td><strong>15 / 30 / 60 / 120 分（加权指数）</strong></td><td><strong>上游分钟 K + 全部历史合约拼接</strong></td><td><strong>全量（可回溯至 2019-12）</strong></td></tr><tr><td><strong>15 / 30 / 60 / 120 分（单合约）</strong></td><td>上游分钟 K 接口</td><td>约 1023 根（上游单次上限）</td></tr><tr><td><strong>日 K</strong></td><td>上游日 K 接口</td><td>全量历史（可回溯约 4~7 年）</td></tr><tr><td><strong>周 / 月 / 年 K</strong></td><td><strong>前端由日 K 合成</strong></td><td>全量</td></tr></tbody></table></div>
 <p><strong>周 / 月 / 年 K 的合成规则</strong>：</p>
 <ul><li>开盘价 = 该周期第一根日 K 的开盘价</li><li>最高价 = 该周期内最高价的最大值</li><li>最低价 = 该周期内最低价的最小值</li><li>收盘价 = 该周期最后一根日 K 的收盘价</li><li>成交量 = 该周期内成交量<strong>求和</strong></li><li>持仓量 = 该周期<strong>最后一根</strong>日 K 的持仓量（期末值）</li></ul>
-<blockquote><p><strong>为什么分钟 K 只有约 1000 根？</strong> 这是上游接口的单次返回上限，不是本程序的限制。</p><p><strong>日 K 不受此限</strong>，可以取到该合约上市以来的完整历史。</p></blockquote>
+<blockquote><p><strong>为什么单合约分钟 K 只有约 1000 根？</strong> 这是上游接口的单次返回上限，不是本程序的限制。</p><p><strong>日 K 不受此限</strong>，可以取到该合约上市以来的完整历史。</p></blockquote>
+<h3 id="h-加权分钟-k-的-历史拼接">加权分钟 K 的「历史拼接」</h3>
+<p><strong>加权指数（右侧列表第一行带 <code>Σ</code> 的那行）的 15 / 30 / 60 / 120 分钟 K 没有 1023 根上限</strong>，</p>
+<p>它由该品种<strong>历史上全部月份合约</strong>（含已退市）拼接而成：</p>
+<div class="tw"><table><thead><tr><th>周期</th><th>拼接后根数（SA 纯碱实测）</th><th>可回溯至</th></tr></thead><tbody><tr><td>120 分</td><td>4 758 根</td><td>2020-02-10</td></tr><tr><td>60 分</td><td>9 772 根</td><td>2019-12-06</td></tr><tr><td>30 分</td><td>18 800 根</td><td>2019-12-06</td></tr><tr><td>15 分</td><td>33 452 根</td><td>2020-02-18</td></tr></tbody></table></div>
+<p>原理：上游对<strong>单个合约</strong>只给"最近约 1023 根"，但<strong>已退市合约的那一段归档仍然取得到</strong>。</p>
+<p>把同一品种所有历史月份合约的分钟 K 按时间戳并起来，同一时刻用各合约**当根 K 线自身的</p>
+<p>持仓量**动态加权（与加权日 K 完全一致的口径），就得到一条完整历史。</p>
+<p>拼接序列<strong>不会出现"看不见的断层"</strong>：相邻两根相隔超过 12 天即判定为断层</p>
+<p>（国内最长休市约 9~10 天），切段后只保留最新那一段返回，被丢弃的根数会写在</p>
+<p>底部「数据说明 / 操作提示」里。上面四个周期实测都没有断层需要丢弃（15 分钟仅丢掉 8 根）。</p>
+<blockquote><p><strong>为什么 1 分钟和 5 分钟不拼接？</strong> 上游对老合约的分钟归档只有 1023 <strong>行</strong>，</p><p>5 分钟的行会被摊薄到整段生命期（例如 SA2007 的 5 分钟 1023 行散在 194 天里），</p><p>于是各合约的稀疏采样<strong>彼此不重合</strong> —— 统计 5 分钟并集的 74 977 个时间戳，**93% 上</p><p>只有 1 个合约有数据**。加权至少要 2 个合约才有意义，硬拼只会得到一条在不同合约</p><p>价格间来回跳的假指数（实测 3.1% 的根跳变超过 1%、最大 25%）。所以这两个周期保持</p><p>1023 根上限。15 分钟以上、1023 行只覆盖约 2 个月，行是密的，可正常重合加权。</p></blockquote>
 <h3 id="h-默认显示全量">默认显示全量</h3>
 <p>所有周期<strong>默认完整显示全部可用数据</strong>（从最新一根往前铺满），不做截断。</p>
-<p>如果你觉得太密，用滚轮或双指捏合放大即可。</p>
+<p>例外：<strong>拼接后的加权分钟 K 可能多达数万根</strong>，单根宽度不足 0.02px，硬塞进一屏既看不清</p>
+<p>又会让拖动缩放每帧重绘数万根 K 线。因此超过 4000 根时默认只显示<strong>最近 1500 根</strong>，</p>
+<p>点「<strong>⤢ 全览</strong>」仍可一次看全部历史。</p>
 <hr>
 <h2 id="h-六-主图指标">六、主图指标</h2>
 <p>主图右上角可切换 5 种主图叠加指标：</p>
@@ -207,12 +220,14 @@ python server.py
 <h3 id="h-量权-成交量加权指数">量权——成交量加权指数</h3>
 <p>同上公式，把持仓量换成成交量。适合观察资金活跃度分布。</p>
 <h3 id="h-天勤-官方指数">天勤——官方指数</h3>
-<p>调用天勤（快期）官方的 <code>KQ.i</code> 指数 / <code>KQ.m</code> 主连。需要配置账号（见<a href="#十五天勤快期账号配置">第十五节</a>）。</p>
+<p>调用天勤（快期）官方的 <code>KQ.i</code> 指数 / <code>KQ.m</code> 主连。需要配置账号（见<a href="#h-十五-天勤-快期-账号配置">第十五节</a>）。</p>
 <p>未配置时该按钮自动置灰。</p>
 <blockquote><p><strong>交叉验证</strong>：本地持仓量加权指数与天勤官方指数在 5 家交易所 6 个品种上偏差全部 ≤ 0.041%，</p><p>说明本地算法是可信的。详见数据源说明文档。</p></blockquote>
 <h3 id="h-加权指数的历史-k-线">加权指数的历史 K 线</h3>
 <p>加权指数支持<strong>分时 / 1分~120分 / 日 / 周 / 月 / 年 K</strong> 全部周期：</p>
-<ul><li><strong>分钟线</strong>：各成分合约分钟线按时间对齐后加权，缺失分钟用前收盘价填充</li><li><strong>日 K</strong>：逐根枚举<strong>当时上市过的全部月份合约</strong>，按<strong>每根 K 线自身的持仓量动态加权</strong></li></ul>
+<ul><li><strong>分钟线（15/30/60/120 分）</strong>：由该品种<strong>全部历史月份合约拼接</strong>而成，可回溯至 2019-12，</li></ul>
+<p>按每根 K 线自身的持仓量动态加权（详见<a href="#h-加权分钟-k-的-历史拼接">第五节</a>）</p>
+<ul><li><strong>分钟线（1/5 分）</strong>：各成分合约分钟线按时间对齐后加权，仍受上游 1023 根上限</li><li><strong>日 K</strong>：逐根枚举<strong>当时上市过的全部月份合约</strong>，按<strong>每根 K 线自身的持仓量动态加权</strong></li></ul>
 <p>（因为主力月份会随时间轮换，用今天的名单去加权历史会严重漏算）</p>
 <ul><li><strong>周 / 月 / 年 K</strong>：由加权日 K 前端合成</li></ul>
 <p>加权日 K 每品种可回溯约 <strong>1,600 ~ 2,014 根</strong>（至 2018-06）。</p>
@@ -294,7 +309,12 @@ python -m PyInstaller --clean --noconfirm 期货行情面板.spec</code></pre>
 <p><strong>Q：提示"行情接口异常"？</strong></p>
 <p>多为网络问题或系统代理干扰。本程序已自动绕过系统代理直连；若公司内网封锁了新浪财经域名，请检查防火墙。</p>
 <p><strong>Q：分钟 K 只有约 1000 根？</strong></p>
-<p>上游接口单次上限约 1023 根，属数据源限制。日 K 不受此限。</p>
+<p>单合约确实是——上游接口单次上限约 1023 根。但<strong>加权指数</strong>的 15/30/60/120 分钟</p>
+<p>已做历史拼接，可达 3 万余根、回溯到 2019 年；1/5 分钟因上游老合约归档太稀疏无法拼接。</p>
+<p>日 K 不受此限。</p>
+<p><strong>Q：加权分钟 K 第一次打开很慢（几秒）？</strong></p>
+<p>拼接要枚举并拉取上百个月份合约的分钟 K。已退市合约的数据不再变化，会缓存 7 天，</p>
+<p>所以只有首次较慢，之后切周期都是瞬时的。</p>
 <p><strong>Q：加权日 K 第一次打开很慢（几秒到十几秒）？</strong></p>
 <p>需要先枚举并拉取数十个月份合约的日 K 再逐根合成，结果有缓存；之后切周期都是瞬时的。</p>
 <p><strong>Q：休市时数据不动？</strong></p>
