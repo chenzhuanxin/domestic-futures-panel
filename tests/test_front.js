@@ -688,6 +688,70 @@ function check(name, cond, extra) {
     check('署名含「微信」字样', st.indexOf('微信') >= 0);
   }
 
+  console.log('\n========== 7d. 加权分钟K 历史拼接 ==========');
+  {
+    // 拼接后的序列可达数万根，必须远超上游单合约 1023 根的上限
+    await App.switchToSymbol('SAW');
+    let ns = 0;
+    while (!(App.state.quote && App.state.quote.code === 'SAW') && ns < 40000) {
+      await sleep(200); ns += 200;
+    }
+
+    const maxGapDays = () => {
+      let g = 0;
+      const b = App.state.bars;
+      for (let i = 1; i < b.length; i++) {
+        const a = Date.parse(b[i - 1].t.replace(' ', 'T'));
+        const z = Date.parse(b[i].t.replace(' ', 'T'));
+        if (isFinite(a) && isFinite(z)) g = Math.max(g, (z - a) / 86400000);
+      }
+      return g;
+    };
+
+    for (const p of ['60', '30', '15', '120']) {
+      await App.loadChart(p);
+      const meta = App.state.klineMeta || {};
+      check('加权 ' + p + ' 分钟为拼接序列（远超 1023 根）',
+        App.state.bars.length > 1023 && meta.stitched === true,
+        App.state.bars.length + ' 根, stitched=' + meta.stitched
+          + ', 合约 ' + meta.contracts + ' 个');
+      check('加权 ' + p + ' 分钟拼接序列无 >12 天断层', maxGapDays() <= 12.0001,
+        maxGapDays().toFixed(2) + ' 天');
+    }
+
+    await App.loadChart('60');
+    const vc = App.visibleRange().count;
+    check('超长序列默认视窗已收窄（不硬塞数万根）',
+      vc <= 1600 && App.state.bars.length > 4000,
+      '可见 ' + vc + ' / 共 ' + App.state.bars.length + ' 根');
+    const si = doc.getElementById('stitchInfo');
+    check('底部数据说明显示拼接信息',
+      !!si && !si.hidden && /拼接/.test(si.textContent),
+      si ? si.textContent.slice(0, 72) : '无');
+
+    // 5 分钟：老合约归档太稀疏、各合约采样不重合，无法加权拼接 → 保持 1023 上限
+    await App.loadChart('5');
+    check('加权 5 分钟保持上游 1023 根上限（拼不动）',
+      App.state.bars.length <= 1100 && !(App.state.klineMeta || {}).stitched,
+      App.state.bars.length + ' 根');
+    check('5 分钟时不显示拼接信息', !!doc.getElementById('stitchInfo').hidden);
+
+    // 日K 必须仍是「默认全量」——之前修过的"看起来没显示全"不能回归
+    await App.loadChart('day');
+    check('日K 默认仍为全量视窗',
+      App.visibleRange().count === App.state.bars.length,
+      App.visibleRange().count + ' / ' + App.state.bars.length);
+
+    await App.switchToSymbol('SA0');
+    let nb = 0;
+    while (!(App.state.quote && App.state.quote.code === 'SA0') && nb < 30000) {
+      await sleep(200); nb += 200;
+    }
+    await App.loadChart('day');
+    let nb2 = 0;
+    while (!App.state.bars.length && nb2 < 30000) { await sleep(200); nb2 += 200; }
+  }
+
   console.log('\n========== 8. 运行期错误 ==========');
   // 忽略 jsdom 未实现的 API 噪音
   const real = errors.filter(e => !/Not implemented|Could not parse CSS|navigation \(except hash changes\)/i.test(e));
