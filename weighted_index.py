@@ -457,6 +457,125 @@ def synth_index_kline(series_list: list[list[dict]],
 
 
 # --------------------------------------------------------------------------- #
+# 一·补、多合约分钟K的**分桶合并**（拼接专用，O(总根数)）
+# --------------------------------------------------------------------------- #
+
+def synth_index_kline_sparse(series_list: list[list[dict]],
+                             min_members: int = 2) -> list[dict]:
+    """按时间戳**分桶合并**多条 K 线，得到与 ``synth_index_kline(mode="auto")``
+    等价的结果，但复杂度是 O(总根数) 而非 O(序列数 × 并集长度)。
+
+    为什么需要它
+    ------------
+    ``mode="auto"`` 只使用**当刻真实成交**的那根 bar 参与加权，向前填充出来的
+    值一个都不用。可 ``synth_index_kline`` 仍会为「每条序列 × 每个并集时间戳」
+    构造一个中间行 —— 加权分钟K 要拼接上百个合约，SA 的 5 分钟并集有 7.5 万个
+    时间戳、89 条序列，就是 670 万个中间行，实测要跑十几秒。改为分桶后只有
+    89 × 1023 ≈ 9 万根 bar 入桶，零点几秒即可。
+
+    语义与 ``mode="auto"`` 完全一致：权重 = 该根 bar 自身的持仓量（为 0 时退化
+    为成交量），当刻真实合约数 < ``min_members`` 时不出这根 K 线。
+    """
+    if not series_list:
+        return []
+    buckets: dict[str, list[dict]] = {}
+    for bars in series_list:
+        for b in bars:
+            t = b.get("t")
+            if not t:
+                continue
+            buckets.setdefault(t, []).append(b)
+
+    out = []
+    for t in sorted(buckets):
+        o = h = low = c = 0.0
+        wsum = tot_v = tot_oi = 0.0
+        used = 0
+        for b in buckets[t]:
+            cv = b.get("c")
+            if cv is None or cv <= 0:
+                continue
+            w = float(b.get("oi") or 0.0)
+            if w <= 0:
+                w = float(b.get("v") or 0.0)
+            if w <= 0:
+                continue
+            o += (b.get("o") or cv) * w
+            h += (b.get("h") or cv) * w
+            low += (b.get("l") or cv) * w
+            c += cv * w
+            wsum += w
+            tot_v += b.get("v") or 0.0
+            tot_oi += b.get("oi") or 0.0
+            used += 1
+        if wsum <= 0 or used < min_members:
+            continue
+        out.append({
+            "t": t,
+            "o": round(o / wsum, 4),
+            "h": round(h / wsum, 4),
+            "l": round(low / wsum, 4),
+            "c": round(c / wsum, 4),
+            "v": tot_v,
+            "oi": tot_oi,
+        })
+    return out
+
+
+# --------------------------------------------------------------------------- #
+# 一·补、拼接序列的「断层」切分
+# --------------------------------------------------------------------------- #
+# 相邻两根 K 线的间隔超过该天数，就认定中间存在**真实的数据断层**
+# （不是收盘/周末/长假）。
+#
+# 取值依据：国内期货最长的连续休市是春节与国庆，名义 7~9 天，2020 年春节因
+# 疫情延后开市达到 10 天。取 12 天可容纳所有正常休市，同时能把
+# 「每个月份合约各自只有一段分钟窗口」造成的大洞切开。实测（SA 纯碱，
+# 枚举 9 年合约）：
+#   · 60 分钟：最大间隔 ≤ 12 天 → 一整个连续段，9944 根，回溯到 2019-12-06
+#   · 15 分钟：同上，36439 根，无断层
+#   · 5  分钟：仅 1 处 15.1 天断层（2020-02 上游归档缺段），74977 根
+#   · 1  分钟：窗口仅 3 天而合约间隔 2 个月 → 断层数十处，无法拼接
+STITCH_MAX_GAP_DAYS = 12.0
+
+
+def _parse_ts(text: str):
+    """兼容 「YYYY-MM-DD」 与 「YYYY-MM-DD HH:MM:SS」 两种时间戳。"""
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(str(text), fmt)
+        except (ValueError, TypeError):
+            continue
+    return None
+
+
+def split_segments(bars: list[dict],
+                   max_gap_days: float = STITCH_MAX_GAP_DAYS) -> list[list[dict]]:
+    """把 K 线序列按时间断层切成若干**连续段**。
+
+    时间戳无法解析的相邻根不做切分（宁可少切，不可误切）。
+    """
+    if not bars:
+        return []
+    segs: list[list[dict]] = []
+    cur: list[dict] = []
+    prev = None
+    limit = max_gap_days * 86400.0
+    for b in bars:
+        t = b.get("t") or ""
+        if prev is not None:
+            a, z = _parse_ts(prev), _parse_ts(t)
+            if a is not None and z is not None and (z - a).total_seconds() > limit:
+                segs.append(cur)
+                cur = []
+        cur.append(b)
+        prev = t
+    if cur:
+        segs.append(cur)
+    return segs
+
+
+# --------------------------------------------------------------------------- #
 # 二、天勤（快期）官方主连 / 指数
 # --------------------------------------------------------------------------- #
 
