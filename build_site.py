@@ -184,7 +184,62 @@ def slug(t: str) -> str:
     return "h-" + (s or "x")
 
 
+# 文档里手写的目录锚点与 slug() 生成的标题 id **对不上**，导致所有目录链接
+# 点了没反应：
+#
+#     标题：  ## 一、数据源总览          →  id="h-一-数据源总览"
+#     目录：  1. [数据源总览](#一数据源总览) →  href="#一数据源总览"   ← 少了 "h-" 且标点处理不同
+#
+# 与其回头改两份 Markdown 的目录，不如在这里把两边都「去掉所有标点」后比对，
+# 命中就换回真实 id。这样既修好了链接，也不影响将来手写的锚点。
+_ANCHOR_KEYS: dict[str, str] = {}
+
+
+def anchor_key(s: str) -> str:
+    """去掉所有非字母数字/汉字的字符，用于宽松匹配锚点。"""
+    return re.sub(r"[^\w\u4e00-\u9fff]", "", s).lower()
+
+
+def inline(t: str) -> str:
+    """行内元素：先占位保护 code，再处理粗体/链接，最后还原 code。"""
+    codes = []
+
+    def stash(m):
+        codes.append(m.group(1))
+        return "\x00%d\x00" % (len(codes) - 1)
+
+    t = re.sub(r"`([^`]+)`", stash, t)
+    t = esc(t)
+
+    # 链接 [text](url)
+    def link(m):
+        url, text = m.group(2), m.group(1)
+        if url.startswith("#"):
+            sid = _ANCHOR_KEYS.get(anchor_key(url[1:]))
+            if sid:
+                url = "#" + sid
+        return '<a href="%s"%s>%s</a>' % (
+            url, ' target="_blank" rel="noopener"' if url.startswith("http") else "", text)
+
+    t = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", link, t)
+    t = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", t)
+    for i, c in enumerate(codes):
+        t = t.replace("\x00%d\x00" % i, "<code>%s</code>" % esc(c))
+    return t
+
+
+def collect_anchors(md: str) -> None:
+    """预扫描各级标题，登记「去标点 key → 真实 id」。"""
+    _ANCHOR_KEYS.clear()
+    for ln in md.split("\n"):
+        m = re.match(r"^#{1,6}\s+(.+?)\s*#*$", ln.strip())
+        if m:
+            sid = slug(m.group(1))
+            _ANCHOR_KEYS[anchor_key(sid)[1:]] = sid      # 去掉 "h" 前缀
+
+
 def md_to_html(md: str) -> str:
+    collect_anchors(md)          # 先登记标题 id，内部链接才能正确指向
     lines = md.split("\n")
     out, i = [], 0
     n = len(lines)
