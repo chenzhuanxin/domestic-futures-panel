@@ -36,6 +36,27 @@ def check(name, cond, detail=""):
         print("  [FAIL] %s  → %s" % (name, detail))
 
 
+def _max_gap_days(bars):
+    """返回相邻 K 线的最大时间间隔（天），用于校验拼接序列无断层。"""
+    import datetime as _dt
+    best = 0.0
+    prev = None
+    for b in bars:
+        t = b.get("t") or ""
+        try:
+            cur = _dt.datetime.strptime(t, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            try:
+                cur = _dt.datetime.strptime(t, "%Y-%m-%d")
+            except ValueError:
+                prev = None
+                continue
+        if prev is not None:
+            best = max(best, (cur - prev).total_seconds() / 86400.0)
+        prev = cur
+    return best
+
+
 def manual_weighted(items, mode="oi"):
     """独立实现一遍加权（不复用服务端代码），用于交叉验证。"""
     rows = []
@@ -185,14 +206,37 @@ def main():
     check("加权日K 历史段成交量量级合理（未漏当月合约）", not vol_bad,
           ("; ".join(vol_bad[:6]) if vol_bad else "全部合理"))
 
-    print("\n========== 8. 加权K线周期适配 ==========")
-    for p, per in [("SA", "1"), ("SA", "5"), ("SA", "60")]:
+    print("\n========== 8. 加权K线周期适配（含分钟K历史拼接） ==========")
+    for p, per in [("SA", "1"), ("SA", "5"), ("SA", "15"), ("SA", "30"),
+                   ("SA", "60"), ("SA", "120"), ("RB", "60")]:
         try:
             k = api("/api/kline", symbol=p + "W", period=per)["data"]
-            check("加权 %s 分钟线可用（period=%s）" % (p, per), len(k["bars"]) > 0,
-                  "%d 根" % len(k["bars"]))
+            n = len(k["bars"])
+            check("加权 %s %s 分钟线可用" % (p, per), n > 0, "%d 根" % n)
         except Exception as exc:                        # noqa: BLE001
-            check("加权 %s 分钟线可用（period=%s）" % (p, per), False, str(exc))
+            check("加权 %s %s 分钟线可用" % (p, per), False, str(exc))
+            continue
+        # 15/30/60/120 分钟必须由历史合约拼接而来（远超上游单合约 1023 根上限）
+        if per in ("15", "30", "60", "120"):
+            check("加权 %s %s 分钟已拼接（> 2046 根）" % (p, per),
+                  n > 2046 and k.get("stitched") is True,
+                  "%d 根, stitched=%s, 合约 %s 个"
+                  % (n, k.get("stitched"), k.get("contracts")))
+            check("加权 %s %s 分钟拼接序列无 >12 天断层" % (p, per),
+                  _max_gap_days(k["bars"]) <= 12.0001,
+                  "%.2f 天" % _max_gap_days(k["bars"]))
+        elif per in ("1", "5"):
+            # 老合约归档太稀疏、各合约采样不重合，加权无意义 → 保持 1023 上限
+            check("加权 %s %s 分钟保持 1023 上限" % (p, per),
+                  n <= 1100 and not k.get("stitched"), "%d 根" % n)
+    # stitch=0 可关闭拼接（对照用）
+    try:
+        k0 = api("/api/kline", symbol="SAW", period="60", stitch="0")["data"]
+        check("stitch=0 时关闭拼接（回到 1023 根）",
+              len(k0["bars"]) <= 1100 and not k0.get("stitched"),
+              "%d 根" % len(k0["bars"]))
+    except Exception as exc:                            # noqa: BLE001
+        check("stitch=0 时关闭拼接（回到 1023 根）", False, str(exc))
 
     print("\n" + "=" * 72)
     print("  总计 %d 项，通过 %d 项，失败 %d 项" % (ok + fail, ok, fail))
