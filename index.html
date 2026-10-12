@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>国内期货行情面板 · 全品种实时行情 / 加权指数</title>
-<meta name="description" content="单机运行的国内全品种期货行情面板，覆盖 79 个品种，支持分时、1~120分钟K线、日周月年K、六种技术指标，内置持仓量加权指数。零依赖、单文件 EXE。">
+<meta name="description" content="单机运行的国内全品种期货行情面板，覆盖 79 个品种，支持分时、1~120分钟K线（加权15/30/60/120分钟由历史合约拼接、回溯至2019年）、日周月年K、六种技术指标，内置持仓量加权指数。零依赖、单文件 EXE。">
 <style>
 :root{
   --bg:#0d1117; --bg2:#161b22; --bg3:#1c2333; --bd:#30363d;
@@ -203,12 +203,12 @@ footer .sign b{color:var(--acc)}
       <div class="card">
         <span class="ico">📈</span>
         <h3>全周期行情</h3>
-        <p>分时、1 / 5 / 15 / 30 / 60 / 120 分钟、日、周、月、年 K。周月年 K 由日 K 合成，成交量求和、持仓量取期末值。</p>
+        <p>分时、1 / 5 / 15 / 30 / 60 / 120 分钟、日、周、月、年 K。周月年 K 由日 K 合成，成交量求和、持仓量取期末值。<br><b>加权分钟 K（15/30/60/120）做了历史拼接</b>：由该品种全部历史月份合约合成，可达 3 万余根、回溯至 2019 年。</p>
       </div>
       <div class="card">
         <span class="ico">⚖️</span>
         <h3>自研加权指数</h3>
-        <p>新浪没有加权指数，本项目用全部在交易合约按持仓量加权合成。支持仓权 / 量权 / 天勤三档口径切换。</p>
+        <p>新浪没有加权指数，本项目用全部在交易合约按持仓量加权合成。支持仓权 / 量权 / 天勤三档口径切换。历史序列逐根按各合约<b>当根 K 线自身的持仓量</b>动态加权，避免主力月份轮换导致严重漏算。</p>
       </div>
       <div class="card">
         <span class="ico">📊</span>
@@ -368,7 +368,7 @@ python server.py</code></pre>
       </a>
       <a class="doc" href="https://github.com/chenzhuanxin/domestic-futures-panel" target="_blank" rel="noopener">
         <h3>💻 源码仓库</h3>
-        <p>Python 后端 + 单文件 HTML 前端，含 3 套回归测试共 179 项断言。欢迎 star 与 issue。</p>
+        <p>Python 后端 + 单文件 HTML 前端，含 3 套回归测试共 209 项断言。欢迎 star 与 issue。</p>
         <div class="go">前往 GitHub →</div>
       </a>
     </div>
@@ -386,7 +386,7 @@ python server.py</code></pre>
           <tr><td>前端</td><td>单文件 <code>index.html</code>，内联 CSS/JS，Canvas 绘图，可离线</td></tr>
           <tr><td>数据源</td><td>新浪财经期货公开接口 + 天勤（快期）<code>tqsdk</code>（可选）</td></tr>
           <tr><td>打包</td><td>PyInstaller 单文件，74 MB，保留控制台便于排错</td></tr>
-          <tr><td>回归测试</td><td><code>test_front.js</code> 148 项 + <code>verify_idxseg.js</code> 16 项 + <code>verify_weighted.py</code> 15 项 = <b>179 项</b>，全部通过</td></tr>
+          <tr><td>回归测试</td><td><code>test_front.js</code> 161 项 + <code>verify_idxseg.js</code> 16 项 + <code>verify_weighted.py</code> 32 项 = <b>209 项</b>，全部通过</td></tr>
           <tr><td>EXE 验证</td><td>三套测试以 EXE 实例为靶心运行，证明打包产物与源码功能等价</td></tr>
         </tbody>
       </table>
