@@ -42,6 +42,7 @@ import time
 import urllib.parse
 import urllib.request
 import webbrowser
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, date
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -702,8 +703,149 @@ def _top_members(members: list[dict], mode: str, cover: float = 0.97) -> list[di
     return out
 
 
+# ---- 加权分钟K「历史拼接」----
+#
+# 上游 getFewMinLine 对**单个合约**只给「最近约 1023 根」：
+#     1 分钟 ≈ 3 天、5 分钟 ≈ 15 天、15 分钟 ≈ 2 个月、60 分钟 ≈ 8 个月、120 分钟 ≈ 16 个月
+# 所以加权指数（在成分合约分钟K上合成）最长也只有 1023 根。
+#
+# 但**已退市合约的分钟归档仍然可取**（同样是它退市前那一段），把该品种历史上
+# 全部月份合约的分钟K按时间戳求并集，就能拼出远长于 1023 根的连续历史。
+# 实测（SA 纯碱，枚举 9 年共 132 个合约代码、89 个有数据）：
+#     15 分 → 33460 根，回溯到 2020-02-18，断层 4 段（丢弃 8 根）
+#     30 分 → 18800 根，回溯到 2019-12-06，无断层
+#     60 分 →  9772 根，回溯到 2019-12-06，无断层
+#     120分 →  4758 根，回溯到 2020-02-10，无断层
+#
+# 为什么 5 分钟和 1 分钟**不参与**拼接（实测数据，不是猜的）：
+# 上游对老合约的分钟归档只有 1023 **行**，5 分钟的行会被摊薄到它整段生命期
+# （如 SA2007 的 5 分钟 1023 行散在 194 天里），于是各合约的稀疏采样**彼此不
+# 重合** —— 统计 5 分钟并集的 74977 个时间戳，93% 上只有 1 个合约有数据。
+# 加权至少要 2 个合约才有意义，硬拼只会得到一条在不同合约价格间来回跳的假指数
+# （实测相邻根跳变中位 0.112% 尚可，但 3.1% 的根跳变 >1%、最大 25%）。
+# 15 分钟以上、1023 行只覆盖约 2 个月，行是密的，各合约能重合加权，故可拼。
+STITCH_PERIODS = frozenset({"15", "30", "60", "120"})
+STITCH_WORKERS = 8                # 并发抓取合约数（12 时曾触发上游限流、耗时飙到 20s）
+STITCH_YEARS_BACK = 9             # 枚举年数，覆盖上游分钟归档（2019-12 起）
+STITCH_MIN_BARS = 200             # 拼接结果短于此值直接回退
+STITCH_GAIN_RATIO = 1.5           # 拼接结果需至少是旧方案的 1.5 倍才采用
+KLINE_TTL_EXPIRED = 604800.0      # 已退市合约的K线不再变化 → 缓存 7 天
+KLINE_TTL_LIVE = 90.0             # 仍在交易的合约 → 90 秒
+
+# 探测为空的合约（该月根本没挂牌）记下来，避免每次刷新都白发一轮请求：
+# 132 个枚举代码里有 43 个是根本不存在的月份。
+_EMPTY_PROBE: dict[str, float] = {}
+_EMPTY_PROBE_LOCK = threading.Lock()
+_EMPTY_PROBE_TTL = 3600.0
+
+
+def _contract_expired(code: str) -> bool:
+    """合约是否已交割（交割月 < 当前月）→ 其K线数据永久固定。"""
+    ym = contract_year_month(code)
+    if ym is None:
+        return False
+    now = datetime.now()
+    return ym < now.year * 100 + now.month
+
+
+def fetch_kline_stitch(code: str, period: str) -> dict:
+    """拼接专用取数：已退市合约走长缓存，在交易合约短缓存。
+
+    用**独立命名空间**（kst:）而不是复用 get_kline 的 k: 前缀，避免与
+    单合约查询互相覆盖 TTL。
+    """
+    key = "kst:%s:%s" % (code, period)
+    now = time.time()
+    with _EMPTY_PROBE_LOCK:
+        at = _EMPTY_PROBE.get(key)
+    if at is not None and now - at < _EMPTY_PROBE_TTL:
+        return {"symbol": code, "period": period, "bars": []}
+
+    ttl = KLINE_TTL_EXPIRED if _contract_expired(code) else KLINE_TTL_LIVE
+    k = CACHE.get_or(key, ttl, lambda: fetch_kline(code, period))
+    if not k.get("bars"):
+        # 已退市合约查不到就是真的没有（记 7 天）；在交易合约可能是上游抖动（只记 1 小时）
+        with _EMPTY_PROBE_LOCK:
+            _EMPTY_PROBE[key] = now
+    return k
+
+
+def synth_minute_topn(sym: dict, period: str, weight_mode: str) -> list[dict]:
+    """回退方案：Top-N 成分 + 当刻持仓量固定权重（与分时口径一致）。
+
+    无法拼接的周期（1 分钟）走这条；拼接结果异常偏短时也回退到这里。
+    """
+    members = [it for it in sym["items"]
+               if not it.get("isWeighted") and not it.get("isMain")]
+    if not members:
+        raise LookupError("无法合成加权 K 线：无在交易成分合约")
+    members = _top_members(members, weight_mode)
+    series, weights = [], []
+    for m in members:
+        try:
+            k = fetch_kline(m["code"], period)
+        except Exception:                               # noqa: BLE001
+            continue
+        if k.get("bars"):
+            series.append(k["bars"])
+            weights.append(_member_weight(m, weight_mode))
+    if not series:
+        raise LookupError("加权 K 线无可用成分数据")
+    return WINDEX.synth_index_kline(series, weights, mode="fixed")
+
+
+def stitch_weighted_minute(product: str, period: str) -> tuple[list[dict], dict]:
+    """把某品种历史全部月份合约的分钟K拼成一条完整的加权指数分钟K。
+
+    步骤：
+      1. 枚举该品种**历史上出现过的全部月份合约**（含已退市）
+      2. 并发抓取每个合约的分钟K（已退市的走 7 天长缓存，第二次起几乎零成本）
+      3. 分桶合并：同一时间戳上，用各合约**当根K线自身的持仓量**动态加权
+         （口径与加权日K 完全一致；用"今天的持仓量"当历史权重会严重失真）
+      4. 按时间断层切成连续段，**只保留最新那一段**返回
+
+    第 4 步很关键：前端 X 轴是按「根序号」等距排布的，如果把断层两侧的
+    K 线直接拼在一起，图上会表现为连续 —— 明明中间空了两个月却看不出来。
+    只返回最新连续段可保证图上不会出现「看不见的断层」；被丢弃的根数通过
+    返回的 meta.dropped 如实告知。实测各周期被丢弃的都极少（5 分钟仅
+    2019-12~2020-02 那一小段）。
+    """
+    codes = all_contract_codes(product, years_back=STITCH_YEARS_BACK)
+
+    def _one(c: str) -> list[dict]:
+        try:
+            return fetch_kline_stitch(c, period).get("bars") or []
+        except Exception:                               # noqa: BLE001
+            return []
+
+    with ThreadPoolExecutor(max_workers=STITCH_WORKERS) as ex:
+        series = [b for b in ex.map(_one, codes) if b]
+
+    if not series:
+        raise LookupError("加权 K 线无可用成分数据（%s %s 分钟）" % (product, period))
+
+    bars = WINDEX.synth_index_kline_sparse(series)
+    if not bars:
+        return [], {"stitched": False}
+
+    segs = WINDEX.split_segments(bars)
+    kept = segs[-1]                                # 最新连续段（含最新一根）
+    meta = {
+        "stitched": True,
+        "contracts": len(series),                  # 实际有数据的合约数
+        "enumerated": len(codes),                  # 枚举到的合约代码数
+        "segments": len(segs),                     # 切出的连续段数
+        "probed": len(bars),                       # 拼接得到的总根数
+        "dropped": len(bars) - len(kept),          # 因断层被丢弃的根数
+        "from": kept[0]["t"],
+        "to": kept[-1]["t"],
+    }
+    return kept, meta
+
+
 def fetch_weighted_kline(code: str, period: str,
-                         weight_mode: str = "oi") -> dict:
+                         weight_mode: str = "oi",
+                         stitch: bool = True) -> dict:
     """XXW 加权 K 线：各月份合约同周期 K 线按时间戳对齐后加权。
 
     权重口径按周期区分（很关键）：
@@ -712,13 +854,15 @@ def fetch_weighted_kline(code: str, period: str,
         当历史权重会漏掉早已退市的当月合约（如 2026-03 的 SA2605 当日成交
         115 万手却是别人的零头），实测成交量被低估 200 倍。
         因此这里要枚举**全部**合约代码（含已退市的月份），不能只取当前 Top-N。
-      * 分钟线：用当刻持仓量快照固定加权（同一交易日内权重稳定，与分时口径一致）。
+      * 分钟线：同样枚举全部历史合约做**历史拼接**（见 stitch_weighted_minute），
+        这是唯一能把 1023 根上限打开的办法。拼接结果异常偏短时回退到旧的
+        「Top-N 成分 + 当刻持仓量固定权重」。
     """
     product = code[:-1].upper()
     src_period = "day" if period in ("day", "week", "month", "year") else period
-
     sym = fetch_symbols(product, weight_mode=weight_mode)
     pname = sym["productName"]
+    meta: dict = {"stitched": False}
 
     if src_period == "day":
         # 历史日K：枚举全部上市过/在交易的全部月份合约（含已退市），动态 OI 加权
@@ -734,31 +878,28 @@ def fetch_weighted_kline(code: str, period: str,
         if not series:
             raise LookupError("加权 K 线无可用成分数据")
         bars = WINDEX.synth_index_kline(series, None, mode="auto")
+    elif src_period in STITCH_PERIODS and stitch:
+        bars, meta = stitch_weighted_minute(product, src_period)
+        # 只有「明显长于上游 1023 根上限」才采用拼接结果，否则退回旧方案 ——
+        # 免得白抓上百个合约，却只换来同样一段近期数据。
+        try:
+            fb = synth_minute_topn(sym, src_period, weight_mode)
+        except Exception:                               # noqa: BLE001
+            fb = []
+        if fb and (len(bars) < STITCH_MIN_BARS
+                   or len(bars) < STITCH_GAIN_RATIO * len(fb)):
+            bars = fb
+            meta = {"stitched": False, "fallback": "topn"}
     else:
-        # 分钟线：Top-N 成分 + 当刻持仓量固定权重（与分时一致）
-        members = [it for it in sym["items"]
-                   if not it.get("isWeighted") and not it.get("isMain")]
-        if not members:
-            raise LookupError("无法合成 %s 的加权 K 线" % product)
-        members = _top_members(members, weight_mode)
-        series, weights = [], []
-        for m in members:
-            try:
-                k = fetch_kline(m["code"], src_period)
-            except Exception:                           # noqa: BLE001
-                continue
-            if k.get("bars"):
-                series.append(k["bars"])
-                weights.append(_member_weight(m, weight_mode))
-        if not series:
-            raise LookupError("加权 K 线无可用成分数据")
-        bars = WINDEX.synth_index_kline(series, weights, mode="fixed")
+        # 1 分钟等窗口过短、拼不出连续历史的周期：固定权重方案
+        bars = synth_minute_topn(sym, src_period, weight_mode)
 
     # 周/月/年由前端用日K合成（与单合约一致），这里统一只回日K
     return {
         "code": code, "name": pname + "指数",
         "period": src_period,
         "bars": bars, "isWeighted": True,
+        **meta,
     }
 
 
@@ -1076,11 +1217,19 @@ def get_weighted_timeshare_cached(code: str) -> dict:
                         lambda: fetch_weighted_timeshare(code))
 
 
-def get_weighted_kline_cached(code: str, period: str) -> dict:
-    fast, slow = (60.0, 600.0) if period in ("day", "week", "month", "year") \
-        else (30.0, 300.0)
-    return CACHE.get_or("wk:%s:%s" % (code, period), tick_ttl(fast, slow),
-                        lambda: fetch_weighted_kline(code, period))
+def get_weighted_kline_cached(code: str, period: str,
+                              stitch: bool = True) -> dict:
+    if period in ("day", "week", "month", "year"):
+        fast, slow = 60.0, 600.0
+    elif stitch and period in STITCH_PERIODS:
+        # 历史拼接首次要并发抓上百个合约，成本高 → 结果缓存时间放长。
+        # （已退市合约的分钟K另有 7 天缓存，所以二次刷新只补在交易的那十几个合约）
+        fast, slow = 150.0, 1800.0
+    else:
+        fast, slow = 30.0, 300.0
+    key = "wk:%s:%s:%d" % (code, period, int(bool(stitch)))
+    return CACHE.get_or(key, tick_ttl(fast, slow),
+                        lambda: fetch_weighted_kline(code, period, "oi", stitch))
 
 
 def get_symbols(product: str, anchor: str | None,
@@ -1266,7 +1415,9 @@ class Handler(BaseHTTPRequestHandler):
             code = self._need_symbol(arg)
             period = arg("period", "day").lower()
             if is_weighted_code(code):
-                return self._ok(get_weighted_kline_cached(code, period))
+                # stitch=0 可关掉分钟K历史拼接（回到上游 1023 根上限），便于对照
+                return self._ok(get_weighted_kline_cached(
+                    code, period, arg("stitch") != "0"))
             return self._ok(get_kline(code, period))
 
         return self._err("未知接口：" + path, 404)
