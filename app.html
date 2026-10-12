@@ -402,9 +402,11 @@ body {
           <div>
             <h4>数据范围</h4>
             <ul>
-              <li>分钟周期（1/5/15/30/60/120）为上游单次上限内<b>最近约 1023 根</b></li>
+              <li><b>加权</b>分钟K（15/30/60/120 分钟）由该品种<b>全部历史月份合约</b>（含已退市）<b>拼接</b>而成，可回溯至 2019 年</li>
+              <li>单合约分钟K、以及 1/5 分钟加权，仍为上游单次上限内<b>最近约 1023 根</b>（老合约归档太稀疏，拼不出可加权的重合样本）</li>
               <li>日K 为全部可得历史；<b>周/月/年K 由日K 前端合成</b></li>
-              <li>加权指数各行数据由该品种<b>全部在交易合约</b>合成，非交易所官方发布</li>
+              <li>加权指数各行数据由该品种<b>历史/在交易合约</b>合成，非交易所官方发布</li>
+              <li id="stitchInfo" hidden></li>
             </ul>
           </div>
           <div>
@@ -776,6 +778,7 @@ const state = {
   tqErr: '',             // 天勤最近一次错误，用于按钮提示
   bars: [],              // 当前 K 线（已合成）
   rawDaily: [],          // 日K 原始（合成用）
+  klineMeta: null,       // /api/kline 返回的元信息（加权分钟K 的拼接状态等）
   timeshare: null,
   quote: null,
   symbols: null,
@@ -930,9 +933,11 @@ function initView() {
 function setPeriodView(period) {
   const n = state.period === 'timeshare' ? 0 : state.bars.length;
   if (period === 'timeshare') { state.viewCount = 0; state.autoView = true; return; }
-  // 默认展示全量：所有周期都从"最新一根"起完整显示，用户可滚轮/拖动自行缩放。
-  // （此前日/周/月/年默认只给 120 根，看起来像"数据没显示全"。）
-  state.viewCount = n || 1;
+  // 默认展示全量；但拼接后的加权分钟K可达数万根，全塞进一屏时单根宽度不足
+  // 0.02px —— 既看不清，又会让拖动/缩放每帧重绘数万根 K 线而卡顿。
+  // 故超过 4000 根时默认只显示最近 1500 根；点「⤢ 全览」仍可一次看全部。
+  // （此前日/周/月/年默认只给 120 根看起来像"数据没显示全"，所以这里阈值放得很宽。）
+  state.viewCount = n > 4000 ? Math.min(n, 1500) : (n || 1);
   state.autoView = true;
 }
 
@@ -2127,13 +2132,16 @@ async function loadChart(period) {
       };
     });
     state.rawDaily = [];
+    state.klineMeta = null;
     buildIndicators();
     state.viewStart = 0; state.viewCount = ts.points.length; state.autoView = true;
+    updateStitchNote();
     draw();
     return;
   }
 
   let bars;
+  state.klineMeta = null;
   if (SYNTH_PERIODS[period]) {
     const daily = await api('/api/kline', { symbol: state.symbol, period: 'day' });
     state.rawDaily = daily.bars;
@@ -2141,6 +2149,7 @@ async function loadChart(period) {
   } else {
     const k = await api('/api/kline', { symbol: state.symbol, period: period });
     bars = k.bars;
+    state.klineMeta = k;          // 携带 stitched / 区间 / 合约数 等拼接信息
   }
   const changed = bars.length !== state.bars.length;
   state.bars = bars;
@@ -2149,8 +2158,28 @@ async function loadChart(period) {
     // 数据长度没变也要重算（收盘价可能变了）
     buildIndicators();
   }
+  updateStitchNote();
   setPeriodView(period);
   draw();
+}
+
+/* 把「当前是拼接序列」这件事显式写进底部数据说明，避免用户误以为
+   加权分钟K 天然只有 1000 多根，或误以为断层处的价格是连续的。 */
+function updateStitchNote() {
+  const el = document.getElementById('stitchInfo');
+  if (!el) return;
+  const m = state.klineMeta;
+  if (!m || !m.stitched) { el.hidden = true; el.textContent = ''; return; }
+  const parts = [
+    '当前加权分钟K为拼接序列：由 ' + m.contracts + ' 个历史月份合约（含已退市）合成',
+    '区间 ' + String(m.from).slice(0, 10) + ' ~ ' + String(m.to).slice(0, 10),
+    '共 ' + state.bars.length + ' 根'
+  ];
+  if (m.dropped > 0) {
+    parts.push('已剔除 ' + (m.segments - 1) + ' 处断层、共 ' + m.dropped + ' 根');
+  }
+  el.hidden = false;
+  el.textContent = parts.join('　·　');
 }
 
 async function refreshAll(showSpinner) {
