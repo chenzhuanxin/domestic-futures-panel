@@ -1,5 +1,7 @@
 # 国内期货行情面板（Python + HTML，全品种）
 
+<img src="assets/icon-256.png" width="72" alt="应用图标" align="right">
+
 一个**单机运行**的**国内全品种**期货行情面板，默认展示**纯碱主力连续（SA0）**，
 覆盖**中金所 / 上期所 / 大商所 / 郑商所 / 广期所**共 79 个品种，
 数据来自**新浪财经期货公开接口**，无需注册、无需 Token、无需安装任何第三方库。
@@ -10,13 +12,13 @@
 
 | 入口 | 地址 |
 |---|---|
-| **⬇ 下载 EXE（免安装，推荐）** | [Releases · v1.0.0](https://github.com/chenzhuanxin/domestic-futures-panel/releases/latest) |
+| **⬇ 下载 EXE（免安装，推荐）** | [Releases · v1.1.0](https://github.com/chenzhuanxin/domestic-futures-panel/releases/latest) |
 | 🌐 **在线主页** | https://chenzhuanxin.github.io/domestic-futures-panel/ |
 | 📖 **使用说明** | https://chenzhuanxin.github.io/domestic-futures-panel/usage.html |
 | 🔌 **数据源说明** | https://chenzhuanxin.github.io/domestic-futures-panel/datasource.html |
 
-> 附件名 `futures-panel-v1.0.0.exe`（74.4 MB / 77,995,654 字节）。
-> SHA-256：`9156159891997ec42abfe0759178c31cac2dfb011e5acda4f4015fad3fb8aa9c`
+> 附件名 `futures-panel-v1.1.0.exe`（83.7 MB / 87,752,336 字节，v1.1.0 起带应用图标与加权分钟K 历史拼接）。
+> SHA-256：`8fc0842ba6a7a7789b28a4a6a3f427cb371c59b5d275ed27554fde7e414bd620`
 >
 > 下载版**不内置任何账号**，「天勤」档默认置灰；要用官方主连/指数请自行放 `tianqin.json`（见「运行」一节）。
 
