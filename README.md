@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/logo.png" width="120" alt="domestic-futures-panel"></p>
+
 # 国内期货行情面板（Python + HTML，全品种）
 
 <img src="assets/icon-256.png" width="72" alt="应用图标" align="right">
