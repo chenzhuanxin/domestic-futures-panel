@@ -19,6 +19,8 @@ PAGE = """<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{title} · 国内期货行情面板</title>
 <meta name="description" content="{desc}">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="apple-touch-icon" href="icon-256.png">
 <style>
 :root{{
   --bg:#0d1117;--bg2:#161b22;--bg3:#1c2333;--bd:#30363d;
@@ -96,7 +98,8 @@ footer .row{{display:flex;flex-wrap:wrap;gap:8px 20px;margin-bottom:10px}}
 <body>
 <header>
   <div class="bar">
-    <div class="logo"><i></i>国内期货行情面板</div>
+    <div class="logo"><img src="icon-64.png" alt=""
+      style="width:20px;height:20px;border-radius:5px;flex:none">国内期货行情面板</div>
     <nav>
       <a href="index.html">首页</a>
       <a href="usage.html">使用说明</a>
