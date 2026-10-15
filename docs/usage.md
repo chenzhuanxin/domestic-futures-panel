@@ -48,7 +48,7 @@
 
 ### 方式一：双击 EXE（推荐，无需 Python）
 
-1. 从 [Releases](https://github.com/chenzhuanxin/domestic-futures-panel/releases) 下载 `futures-panel-v1.0.0.exe`；
+1. 从 [Releases](https://github.com/chenzhuanxin/domestic-futures-panel/releases) 下载 `futures-panel-v1.1.0.exe`；
 2. 放到任意文件夹，**双击运行**；
 3. 会弹出一个黑色控制台窗口，显示面板地址与行情连通状态；
 4. 稍等几秒，浏览器自动打开 `http://127.0.0.1:8686/`。
@@ -498,6 +498,11 @@ python -m PyInstaller --clean --noconfirm 期货行情面板.spec
 | **tqsdk 是惰性导入** | PyInstaller 静态分析扫不到，必须用 `hookspath` 指定自定义 hook 补齐依赖 |
 | **资源路径要区分** | 打包后 `__file__` 指向临时目录，只读资源要用 `sys._MEIPASS` |
 | **保留控制台** | spec 里 `console=True` 便于排错，想要无窗口改成 `False` |
+
+**应用图标**：EXE 图标与浏览器标签页 favicon 都来自 `assets/icon.ico`
+（多尺寸 16~256px，深色圆角底 + 红涨绿跌蜡烛图）。改图标不要直接用图片编辑器
+改 ico——跑 `python make_icon.py` 重新生成，脚本内可以改配色与蜡烛形态，
+每个尺寸独立绘制，保证 16px 下依然清晰。
 
 ---
 
