@@ -50,10 +50,13 @@ else:
     TQ_JSON = os.path.join(HERE, 'tianqin.json')
     EXE_NAME = '期货行情面板'
 
+ICON = os.path.join(HERE, 'assets', 'icon.ico')   # 由 make_icon.py 生成
+
 # 需要随包携带的只读资源
 datas = [
     (os.path.join(HERE, 'index.html'), '.'),
     (TQ_JSON, '.'),
+    (ICON, 'assets'),          # 浏览器标签页 favicon（/favicon.ico 路由会读它）
 ]
 
 # tqsdk 是惰性导入（函数内 import），静态分析扫不到 → 显式声明。
@@ -132,5 +135,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None,
+    icon=ICON,                 # EXE 文件图标（任务栏/资源管理器/快捷方式）
 )
