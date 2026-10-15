@@ -1356,7 +1356,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._static(panel_html_path())
 
             if path == "/favicon.ico":
-                return self._send(204, b"", "image/x-icon")
+                return self._favicon()
 
             # 其他静态资源（同目录白名单，防目录穿越）
             rel = path.lstrip("/").replace("\\", "/")
@@ -1445,6 +1445,18 @@ class Handler(BaseHTTPRequestHandler):
         }.get(ext, "application/octet-stream")
         with open(full, "rb") as fh:
             self._send(200, fh.read(), ctype)
+
+    def _favicon(self) -> None:
+        """浏览器标签页图标：assets/icon.ico（打包后位于 _MEIPASS/assets/）。
+
+        找不到文件时回退 204 —— 与旧版行为一致，浏览器只是不显示图标而已。
+        """
+        full = os.path.join(APP_DIR, "assets", "icon.ico")
+        if not os.path.isfile(full):
+            return self._send(204, b"", "image/x-icon")
+        with open(full, "rb") as fh:
+            # 图标仅 60KB，走全局 no-store 缓存策略即可，不单独覆写 Cache-Control
+            self._send(200, fh.read(), "image/x-icon")
 
 
 VERBOSE = False
