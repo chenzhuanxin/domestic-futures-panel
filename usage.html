@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>使用说明 · 国内期货行情面板</title>
 <meta name="description" content="国内期货行情面板完整使用说明：安装运行、界面导览、行情字段、周期与指标、加权指数、全部操作、常见问题。">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="apple-touch-icon" href="icon-256.png">
 <style>
 :root{
   --bg:#0d1117;--bg2:#161b22;--bg3:#1c2333;--bd:#30363d;
@@ -82,7 +84,8 @@ footer .row{display:flex;flex-wrap:wrap;gap:8px 20px;margin-bottom:10px}
 <body>
 <header>
   <div class="bar">
-    <div class="logo"><i></i>国内期货行情面板</div>
+    <div class="logo"><img src="icon-64.png" alt=""
+      style="width:20px;height:20px;border-radius:5px;flex:none">国内期货行情面板</div>
     <nav>
       <a href="index.html">首页</a>
       <a href="usage.html">使用说明</a>
@@ -106,7 +109,7 @@ footer .row{display:flex;flex-wrap:wrap;gap:8px 20px;margin-bottom:10px}
 <hr>
 <h2 id="h-二-两种运行方式">二、两种运行方式</h2>
 <h3 id="h-方式一-双击-exe-推荐-无需-python">方式一：双击 EXE（推荐，无需 Python）</h3>
-<ol><li>从 <a href="https://github.com/chenzhuanxin/domestic-futures-panel/releases" target="_blank" rel="noopener">Releases</a> 下载 <code>futures-panel-v1.0.0.exe</code>；</li><li>放到任意文件夹，<strong>双击运行</strong>；</li><li>会弹出一个黑色控制台窗口，显示面板地址与行情连通状态；</li><li>稍等几秒，浏览器自动打开 <code>http://127.0.0.1:8686/</code>。</li></ol>
+<ol><li>从 <a href="https://github.com/chenzhuanxin/domestic-futures-panel/releases" target="_blank" rel="noopener">Releases</a> 下载 <code>futures-panel-v1.1.0.exe</code>；</li><li>放到任意文件夹，<strong>双击运行</strong>；</li><li>会弹出一个黑色控制台窗口，显示面板地址与行情连通状态；</li><li>稍等几秒，浏览器自动打开 <code>http://127.0.0.1:8686/</code>。</li></ol>
 <pre><code>============================================================
   国内期货行情面板  ·  数据源：新浪财经
 ============================================================
@@ -304,6 +307,10 @@ python -m PyInstaller --clean --noconfirm 期货行情面板.spec</code></pre>
 <p>产物在 <code>dist/期货行情面板.exe</code>。</p>
 <p><strong>打包要点</strong>（改 spec 前务必看一遍，这几个坑都实际踩过）：</p>
 <div class="tw"><table><thead><tr><th>事项</th><th>说明</th></tr></thead><tbody><tr><td><strong>不要 exclude <code>numpy</code> / <code>pandas</code></strong></td><td><code>tqsdk/api.py</code> 顶层无保护地 <code>import numpy</code> / <code>import pandas</code>，排除后 tqsdk 直接不可用（体积从 22MB 涨到 74MB 就是这么来的）</td></tr><tr><td><strong>不要 exclude <code>unittest</code></strong></td><td>tqsdk 依赖链会走到 <code>numpy.testing._private.utils</code>，那里顶层 import unittest</td></tr><tr><td><strong>tqsdk 是惰性导入</strong></td><td>PyInstaller 静态分析扫不到，必须用 <code>hookspath</code> 指定自定义 hook 补齐依赖</td></tr><tr><td><strong>资源路径要区分</strong></td><td>打包后 <code>__file__</code> 指向临时目录，只读资源要用 <code>sys._MEIPASS</code></td></tr><tr><td><strong>保留控制台</strong></td><td>spec 里 <code>console=True</code> 便于排错，想要无窗口改成 <code>False</code></td></tr></tbody></table></div>
+<p><strong>应用图标</strong>：EXE 图标与浏览器标签页 favicon 都来自 <code>assets/icon.ico</code></p>
+<p>（多尺寸 16~256px，深色圆角底 + 红涨绿跌蜡烛图）。改图标不要直接用图片编辑器</p>
+<p>改 ico——跑 <code>python make_icon.py</code> 重新生成，脚本内可以改配色与蜡烛形态，</p>
+<p>每个尺寸独立绘制，保证 16px 下依然清晰。</p>
 <hr>
 <h2 id="h-十七-常见问题">十七、常见问题</h2>
 <p><strong>Q：提示"行情接口异常"？</strong></p>
